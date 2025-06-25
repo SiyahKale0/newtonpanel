@@ -30,7 +30,7 @@ export default function DoctorLoginPage() {
       if (email === 'doktor@ornek.com' && password === 'guvenliSifre123') {
         console.log('Giriş başarılı!');
         // Giriş başarılı olursa kullanıcıyı dashboard'a yönlendir
-        router.push('/dashboard'); 
+        router.push('/panel'); 
       } else {
         throw new Error('E-posta veya şifre hatalı.');
       }
