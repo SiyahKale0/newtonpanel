@@ -2,322 +2,299 @@
 
 "use client"
 
-// React ve hook'ları import ediyoruz
 import React, { useState, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Slider } from "@/components/ui/slider"
-import { Textarea } from "@/components/ui/textarea"
-import { Target, Zap, Grid3X3, Save, Play } from "lucide-react"
-import type { DashboardPatient, DashboardBasket, DashboardTaskType, DifficultyConfig } from "@/types/dashboard"
+import { Input } from "@/components/ui/input"
+import {
+  Target,
+  Search,
+  ArrowUpDown,
+  Piano,
+  HandMetal, // Düzeltilmiş ikon
+} from "lucide-react"
 
-// 3D Grid bileşenini import ediyoruz
-import { ThreeDGrid } from "@/components/three-d-grid"
-
-interface DashboardAppleType {
-  id: number
-  type: "fresh" | "rotten"
-  position: { x: number; y: number; z: number }
-  realDistance: number
-}
+// Parmak seçimi için oluşturacağımız yeni bileşeni import ediyoruz.
+import { FingerSelection } from "./finger-selection"
+import type { DashboardPatient } from "@/types/dashboard"
+import { ThreeDGrid } from "./three-d-grid" // Bu importun zaten olduğunu varsayıyorum
 
 export function SessionCreator() {
   // --- STATE TANIMLAMALARI ---
-  const [selectedPatient, setSelectedPatient] = useState<string>("")
-  const [sessionLevel, setSessionLevel] = useState<number>(1)
-  const [difficulty, setDifficulty] = useState<string>("medium")
-  const [duration, setDuration] = useState<number[]>([120])
-  const [apples, setApples] = useState<DashboardAppleType[]>([])
-  const [baskets, setBaskets] = useState<DashboardBasket[]>([])
+  const [activeTab, setActiveTab] = useState("patient")
+  const [selectedPatient, setSelectedPatient] = useState<DashboardPatient | null>(
+      null
+  )
+  const [searchTerm, setSearchTerm] = useState("")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "name">("name")
+  const [selectedGame, setSelectedGame] = useState<"apple" | "piano" | null>(
+      null
+  )
 
-  // --- SABİT VERİLER ---
-  const patients: DashboardPatient[] = [
-    { id: 1, name: "Mehmet Yılmaz", romLimit: 60 },
-    { id: 2, name: "Fatma Demir", romLimit: 45 },
-    { id: 3, name: "Ali Kaya", romLimit: 40 },
-    { id: 4, name: "Zeynep Öz", romLimit: 55 },
-  ] as DashboardPatient[]
+  // --- ÖRNEK VERİLER ---
+  const patients = useMemo(
+      () =>
+          [
+            { id: 1, name: "Mehmet Yılmaz", age: 45, romLimit: 60 },
+            { id: 2, name: "Fatma Demir", age: 38, romLimit: 45 },
+            { id: 3, name: "Ali Kaya", age: 52, romLimit: 40 },
+            { id: 4, name: "Zeynep Öz", age: 29, romLimit: 55 },
+          ] as DashboardPatient[],
+      []
+  )
 
-  const taskTypes: DashboardTaskType[] = [
-    { id: "touch", name: "Dokun", description: "Elmaya dokunarak düşür" },
-    { id: "grab-hold", name: "Kavra-Tut", description: "Elmayı kavra ve bekle" },
-    { id: "grab-drop", name: "Kavra-Bırak", description: "Elmayı kavra ve bırak" },
-    { id: "drag", name: "Sürükle", description: "Elmayı sepete sürükle" },
-    { id: "sort", name: "Ayır", description: "Sağlam/çürük ayrımı yap" },
-  ] as DashboardTaskType[]
-
-  const difficultyLevels: Record<string, DifficultyConfig> = {
-    easy: { name: "Kolay", distance: 20, color: "text-green-600" },
-    medium: { name: "Orta", distance: 40, color: "text-yellow-600" },
-    hard: { name: "Zor", distance: 60, color: "text-red-600" },
-  }
-
-  // --- DÜZELTİLMİŞ KISIM: useMemo HOOK'U ---
-  // Bu hook, state'lerden sonra ve return'den önce, component'in en üst seviyesinde olmalı.
-  const selectedPatientData = useMemo(() => {
-    // selectedPatient (string) ile patient.id (number) karşılaştırması için toString() kullanılıyor.
-    return patients.find((p) => p.id.toString() === selectedPatient)
-  }, [selectedPatient, patients]) // Bağımlılıklar: Bu hook sadece bu değerler değiştiğinde yeniden çalışır.
+  // Arama ve sıralama mantığı
+  const filteredAndSortedPatients = useMemo(() => {
+    return patients
+        .filter((patient) =>
+            patient.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+          if (sortOrder === "asc") {
+            return a.age - b.age
+          }
+          if (sortOrder === "desc") {
+            return b.age - a.age
+          }
+          return a.name.localeCompare(b.name)
+        })
+  }, [patients, searchTerm, sortOrder])
 
   // --- FONKSİYONLAR ---
-  const addApple = (type: "fresh" | "rotten", x: number, y: number, z: number) => {
-    const newApple: DashboardAppleType = {
-      id: Date.now(),
-      type,
-      position: { x, y, z },
-      realDistance: Math.sqrt(x * x + y * y + z * z) * 20,
+  const handleNext = () => {
+    if (activeTab === "setup") {
+      if (selectedGame === "apple") {
+        setActiveTab("objects")
+      } else if (selectedGame === "piano") {
+        setActiveTab("finger-selection")
+      }
+    } else if (activeTab === "objects" || activeTab === "finger-selection") {
+      setActiveTab("preview")
+    } else if (activeTab === "patient" && selectedPatient) {
+      setActiveTab("setup")
     }
-    setApples((prevApples) => [...prevApples, newApple])
   }
 
-  const addBasket = (type: "fresh" | "rotten", x: number, y: number, z: number) => {
-    const newBasket: DashboardBasket = {
-      id: Date.now(),
-      type,
-      position: { x, y, z },
+  // Önceki adıma dönmek için
+  const handleBack = () => {
+    if (activeTab === 'preview') {
+      if(selectedGame === 'apple') setActiveTab('objects');
+      else if (selectedGame === 'piano') setActiveTab('finger-selection');
+    } else if (activeTab === 'objects' || activeTab === 'finger-selection') {
+      setActiveTab('setup');
+    } else if (activeTab === 'setup') {
+      setActiveTab('patient');
     }
-    setBaskets((prevBaskets) => [...prevBaskets, newBasket])
   }
 
-  // --- RENDER EDİLECEK JSX ---
+  // Örnek state'ler (Nesne yerleşimi için gerekli)
+  const [apples, setApples] = useState([])
+  const [baskets, setBaskets] = useState([])
+
+
   return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5" />
-              Yeni Rehabilitasyon Seansı Oluştur
+              <Target className="h-5 w-5" />
+              Yeni Rehabilitasyon Seansı
             </CardTitle>
-            <CardDescription>Hastanıza özel XR rehabilitasyon seansı tasarlayın</CardDescription>
+            <CardDescription>
+              Hastanıza özel bir rehabilitasyon seansı oluşturmak için adımları
+              takip edin.
+            </CardDescription>
           </CardHeader>
         </Card>
 
-        <Tabs defaultValue="patient" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="patient">Hasta Seçimi</TabsTrigger>
-            <TabsTrigger value="setup">Seans Ayarları</TabsTrigger>
-            <TabsTrigger value="objects">Nesne Yerleşimi</TabsTrigger>
-            <TabsTrigger value="preview">Önizleme</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="patient">1. Hasta Seçimi</TabsTrigger>
+            <TabsTrigger value="setup" disabled={!selectedPatient}>
+              2. Oyun Seçimi
+            </TabsTrigger>
+            <TabsTrigger value="objects" disabled={selectedGame !== "apple"}>
+              3. Nesne Yerleşimi
+            </TabsTrigger>
+            <TabsTrigger
+                value="finger-selection"
+                disabled={selectedGame !== "piano"}
+            >
+              3. Parmak Seçimi
+            </TabsTrigger>
+            <TabsTrigger value="preview" disabled={!selectedGame}>
+              4. Önizleme
+            </TabsTrigger>
           </TabsList>
 
+          {/* ==================== HASTA SEÇİMİ ==================== */}
           <TabsContent value="patient" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Hasta Seçimi ve ROM Kalibrasyonu</CardTitle>
-                <CardDescription>Seans için hasta seçin ve ROM limitlerini kontrol edin</CardDescription>
+                <CardTitle>Hasta Seçimi</CardTitle>
+                <CardDescription>
+                  Seans için hasta arayın, sıralayın ve seçin.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="patient">Hasta Seçin</Label>
-                  <Select value={selectedPatient} onValueChange={setSelectedPatient}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Hasta seçin..." />
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                        placeholder="Hasta adıyla ara..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                  </div>
+                  <Select
+                      onValueChange={(value: "asc" | "desc" | "name") =>
+                          setSortOrder(value)
+                      }
+                      defaultValue="name"
+                  >
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <ArrowUpDown className="mr-2 h-4 w-4" />
+                      <SelectValue placeholder="Sırala" />
                     </SelectTrigger>
                     <SelectContent>
-                      {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id.toString()}>
-                            {patient.name} (ROM: {patient.romLimit}cm)
-                          </SelectItem>
-                      ))}
+                      <SelectItem value="name">Ada Göre Sırala</SelectItem>
+                      <SelectItem value="asc">Yaşa Göre (Artan)</SelectItem>
+                      <SelectItem value="desc">Yaşa Göre (Azalan)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {selectedPatientData && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-2">ROM Kalibrasyonu</h4>
-                      <p className="text-sm text-blue-700">
-                        Seçilen hasta için 1 koordinat birimi = 20cm olarak ayarlanmıştır.
-                      </p>
-                      <p className="text-sm text-blue-700">
-                        Maksimum uzanım: {selectedPatientData.romLimit}cm (Grid
-                        koordinatı: {selectedPatientData.romLimit / 20})
-                      </p>
-                    </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="setup" className="space-y-6">
-            {/* Bu sekmenin içeriği önceki cevaplardaki gibi kalabilir, değişiklik yok */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Seviye Ayarları</CardTitle>
-                  <CardDescription>Görev seviyesi ve zorluk derecesi</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Seviye: {sessionLevel}</Label>
-                    <Slider
-                        value={[sessionLevel]}
-                        onValueChange={(value) => setSessionLevel(value[0])}
-                        max={9}
-                        min={1}
-                        step={1}
-                        className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="difficulty">Zorluk Derecesi</Label>
-                    <Select value={difficulty} onValueChange={setDifficulty}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(difficultyLevels).map(([key, level]) => (
-                            <SelectItem key={key} value={key}>
-                              <span className={level.color}>{level.name}</span> - {level.distance}cm
-                            </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Görev Süresi: {duration[0]} saniye</Label>
-                    <Slider value={duration} onValueChange={setDuration} max={300} min={30} step={30} className="mt-2" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Görev Tipi</CardTitle>
-                  <CardDescription>Hastanın yapacağı egzersiz türü</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {taskTypes.map((task) => (
-                        <div key={task.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
-                          <input type="radio" name="taskType" id={task.id} className="w-4 h-4" />
-                          <label htmlFor={task.id} className="flex-1 cursor-pointer">
-                            <div className="font-medium">{task.name}</div>
-                            <div className="text-sm text-muted-foreground">{task.description}</div>
-                          </label>
-                        </div>
+                <div className="space-y-2 pt-4">
+                  <Label>Hastalar</Label>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredAndSortedPatients.map((patient) => (
+                        <Card
+                            key={patient.id}
+                            className={`cursor-pointer transition-all ${
+                                selectedPatient?.id === patient.id
+                                    ? "border-primary ring-2 ring-primary"
+                                    : "hover:border-primary/50"
+                            }`}
+                            onClick={() => setSelectedPatient(patient)}
+                        >
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold">{patient.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Yaş: {patient.age} - ROM Limiti: {patient.romLimit}cm
+                            </p>
+                          </CardContent>
+                        </Card>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                  {filteredAndSortedPatients.length === 0 && (
+                      <p className="text-center text-sm text-muted-foreground pt-4">Aramanızla eşleşen hasta bulunamadı.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex justify-end">
+              <Button onClick={handleNext} disabled={!selectedPatient}>Devam</Button>
             </div>
           </TabsContent>
 
-          <TabsContent value="objects" className="space-y-6">
-            {/* Bu sekmenin içeriği önceki cevaplardaki gibi kalabilir, değişiklik yok */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Grid3X3 className="w-5 h-5" />3D Koordinat Haritası
-                  </CardTitle>
-                  <CardDescription>Elma ve sepet yerleşimi için koordinatları belirleyin</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[350px] w-full rounded-lg overflow-hidden">
-                    <ThreeDGrid apples={apples} baskets={baskets} romLimit={selectedPatientData?.romLimit ?? 0}/>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => addApple("fresh", Math.round(Math.random() * 6 - 3), Math.round(Math.random() * 3), Math.round(Math.random() * 3))}>
-                      <Grid3X3 className="w-4 h-4 mr-2" />Rastgele Sağlam Elma Ekle
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => addApple("rotten", Math.round(Math.random() * 6 - 3), Math.round(Math.random() * 3), Math.round(Math.random() * 3))}>
-                      <Grid3X3 className="w-4 h-4 mr-2" />Rastgele Çürük Elma Ekle
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full" onClick={() => addBasket("fresh", Math.round(Math.random() * 6 - 3), 0, Math.round(Math.random() * 3))}>
-                      <Grid3X3 className="w-4 h-4 mr-2" />Rastgele Sepet Ekle
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Yerleştirilen Nesneler</CardTitle>
-                  <CardDescription>Sahnedeki elma ve sepetlerin listesi</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Grid3X3 className="w-4 h-4" />Elmalar ({apples.length})</h4>
-                      {apples.length === 0 ? (<p className="text-sm text-muted-foreground">Henüz elma eklenmedi</p>) : (
-                          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                            {apples.map((apple) => (
-                                <div key={apple.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant={apple.type === "fresh" ? "default" : "destructive"}>{apple.type === "fresh" ? "Sağlam" : "Çürük"}</Badge>
-                                    <span className="text-sm font-mono">(x:{apple.position.x}, y:{apple.position.y}, z:{apple.position.z})</span>
-                                    <span className="text-xs text-muted-foreground">{apple.realDistance.toFixed(0)}cm</span>
-                                  </div>
-                                  <Button variant="ghost" size="sm" onClick={() => setApples(apples.filter((a) => a.id !== apple.id))}>Sil</Button>
-                                </div>))}
-                          </div>)}
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Grid3X3 className="w-4 h-4" />Sepetler ({baskets.length})</h4>
-                      {baskets.length === 0 ? (<p className="text-sm text-muted-foreground">Henüz sepet eklenmedi</p>) : (
-                          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                            {baskets.map((basket) => (
-                                <div key={basket.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant={basket.type === "fresh" ? "default" : "secondary"}>{basket.type === "fresh" ? "Sağlam" : "Çürük"}</Badge>
-                                    <span className="text-sm font-mono">(x:{basket.position.x}, y:{basket.position.y}, z:{basket.position.z})</span>
-                                  </div>
-                                  <Button variant="ghost" size="sm" onClick={() => setBaskets(baskets.filter((b) => b.id !== basket.id))}>Sil</Button>
-                                </div>))}
-                          </div>)}
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Zap className="w-4 h-4 mr-2" />Otomatik Dağıtım
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="preview" className="space-y-6">
-            {/* Bu sekmenin içeriği önceki cevaplardaki gibi kalabilir, değişiklik yok */}
+          {/* ==================== OYUN SEÇİMİ ==================== */}
+          <TabsContent value="setup" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Seans Önizlemesi</CardTitle>
-                <CardDescription>Oluşturulan seansın özeti ve son kontroller</CardDescription>
+                <CardTitle>Oyun Seçin</CardTitle>
+                <CardDescription>
+                  Oynanacak rehabilitasyon oyununu seçin.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{sessionLevel}</div>
-                      <div className="text-sm text-blue-700">Seviye</div>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{duration[0]}s</div>
-                      <div className="text-sm text-green-700">Süre</div>
-                    </div>
-                    <div className="bg-orange-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">{apples.length}</div>
-                      <div className="text-sm text-orange-700">Elma</div>
-                    </div>
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">{baskets.length}</div>
-                      <div className="text-sm text-purple-700">Sepet</div>
-                    </div>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div
+                      onClick={() => setSelectedGame("apple")}
+                      className={`flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border p-8 transition-all ${
+                          selectedGame === "apple"
+                              ? "border-primary ring-2 ring-primary"
+                              : "hover:border-primary/50"
+                      }`}
+                  >
+                    <HandMetal className="h-12 w-12 text-red-500" />
+                    <h3 className="text-lg font-semibold">
+                      Elma Toplama Oyunu
+                    </h3>
                   </div>
-                  <div className="flex gap-4">
-                    <Button className="flex-1"><Save className="w-4 h-4 mr-2" />Seansı Kaydet</Button>
-                    <Button variant="outline" className="flex-1"><Play className="w-4 h-4 mr-2" />Test Et</Button>
-                  </div>
-                  <div>
-                    <Label htmlFor="notes">Seans Notları</Label>
-                    <Textarea id="notes" placeholder="Bu seans hakkında notlarınızı yazın..." className="mt-2" />
+                  <div
+                      onClick={() => setSelectedGame("piano")}
+                      className={`flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border p-8 transition-all ${
+                          selectedGame === "piano"
+                              ? "border-primary ring-2 ring-primary"
+                              : "hover:border-primary/50"
+                      }`}
+                  >
+                    <Piano className="h-12 w-12 text-blue-500" />
+                    <h3 className="text-lg font-semibold">Piyano Oyunu</h3>
                   </div>
                 </div>
               </CardContent>
             </Card>
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>Geri</Button>
+              {selectedGame && <Button onClick={handleNext}>Devam</Button>}
+            </div>
+          </TabsContent>
+
+          {/* ==================== NESNE YERLEŞİMİ (ELMA OYUNU) ==================== */}
+          <TabsContent value="objects" className="animate-in fade-in-20 space-y-6 transition-opacity duration-300">
+            {/* Not: ThreeDGrid ve ilgili state'lerin bu bileşende tanımlı olduğunu varsayıyorum */}
+            <ThreeDGrid apples={apples} baskets={baskets} romLimit={selectedPatient?.romLimit ?? 0} />
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>Geri</Button>
+              <Button onClick={handleNext}>Devam</Button>
+            </div>
+          </TabsContent>
+
+          {/* ==================== PARMAK SEÇİMİ (PİYANO OYUNU) ==================== */}
+          <TabsContent value="finger-selection" className="animate-in fade-in-20 space-y-6 transition-opacity duration-300">
+            <FingerSelection />
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>Geri</Button>
+              <Button onClick={handleNext}>Devam</Button>
+            </div>
+          </TabsContent>
+
+          {/* ==================== ÖNİZLEME ==================== */}
+          <TabsContent value="preview" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Seans Önizleme</CardTitle>
+                <CardDescription>Seans ayarlarını kontrol edip kaydedin.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p><span className="font-semibold">Hasta:</span> {selectedPatient?.name}</p>
+                  <p><span className="font-semibold">Oyun:</span> {selectedGame === 'apple' ? 'Elma Toplama Oyunu' : 'Piyano Oyunu'}</p>
+                  {/* Seçilen parmakları veya elmaları burada listeleyebilirsiniz */}
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleBack}>Geri</Button>
+              <Button>Seansı Başlat</Button>
+            </div>
           </TabsContent>
 
         </Tabs>
