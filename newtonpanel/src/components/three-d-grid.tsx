@@ -2,7 +2,6 @@
 
 "use client"
 
-// Hatalı olan 'import *at React' satırı düzeltildi.
 import * as React from "react"
 import { Canvas } from "@react-three/fiber"
 import { Grid, OrbitControls, Text, Box, Sphere } from "@react-three/drei"
@@ -43,7 +42,7 @@ export function ThreeDGrid({ apples, baskets, romLimit }: ThreeDGridProps) {
     return (
         <Canvas
             camera={{ position: [gridLimit * 1.5, gridLimit * 1.5, gridLimit * 2.5], fov: 50 }}
-            className="bg-gray-100 dark:bg-gray-800 rounded-lg"
+            className="rounded-lg bg-gray-100 dark:bg-gray-800 h-full w-full"
         >
             {/* Işıklandırma */}
             <ambientLight intensity={1.5} />
@@ -91,7 +90,6 @@ export function ThreeDGrid({ apples, baskets, romLimit }: ThreeDGridProps) {
                 />
             ))}
 
-            {/* Kamera Kontrolleri */}
             <OrbitControls makeDefault />
         </Canvas>
     )

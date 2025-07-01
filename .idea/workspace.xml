@@ -5,10 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/types/dashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/types/dashboard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/three-d-grid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/three-d-grid.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,7 +88,8 @@
       <workItem from="1750929790372" duration="3309000" />
       <workItem from="1751011854119" duration="5192000" />
       <workItem from="1751126019656" duration="1858000" />
-      <workItem from="1751263806257" duration="4851000" />
+      <workItem from="1751263806257" duration="5327000" />
+      <workItem from="1751353944120" duration="2610000" />
     </task>
     <servers />
   </component>
