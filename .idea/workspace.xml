@@ -5,10 +5,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/3d-models/Finger.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/3d-models/Hand.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/3d-models/materials.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/QuickActions.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/RecentSessions.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/StatsCards.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/TopPerformers.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/AddPatientDialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/PatientCard.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/LevelSuccessRateChart.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PatientPerformanceTable.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PerformanceFilter.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PerformanceSummaryCards.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/TimeAnalysisChart.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/WeeklyProgressChart.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/data.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/GameSelectionTab.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/ObjectPlacementTab.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PatientSelectionTab.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PreviewTab.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/patient-management.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/three-d-grid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/three-d-grid.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/types/dashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/types/dashboard.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,21 +61,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;#3 on mirhan&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.1.4\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "#3 on mirhan",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/mirxan/Documents/GitHub/newtonpanel/newtonpanel/src/components/ui",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "show.migrate.to.gradle.popup": "false",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.1.4\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\mirxan\Documents\GitHub\newtonpanel\newtonpanel\src\components\ui" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="newtonpanel" />
@@ -89,7 +118,8 @@
       <workItem from="1751011854119" duration="5192000" />
       <workItem from="1751126019656" duration="1858000" />
       <workItem from="1751263806257" duration="5327000" />
-      <workItem from="1751353944120" duration="2610000" />
+      <workItem from="1751353944120" duration="4626000" />
+      <workItem from="1751367568250" duration="3656000" />
     </task>
     <servers />
   </component>
