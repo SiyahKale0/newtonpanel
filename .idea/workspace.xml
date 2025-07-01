@@ -5,33 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/3d-models/Finger.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/3d-models/Hand.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/3d-models/materials.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/QuickActions.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/RecentSessions.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/StatsCards.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview/TopPerformers.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/AddPatientDialog.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/PatientCard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/LevelSuccessRateChart.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PatientPerformanceTable.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PerformanceFilter.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PerformanceSummaryCards.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/TimeAnalysisChart.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/WeeklyProgressChart.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/data.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/GameSelectionTab.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/ObjectPlacementTab.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PatientSelectionTab.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PreviewTab.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/device-management.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/device-management/AddDeviceDialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/middleware.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/dashboard-overview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/finger-selection.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/patient-management.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/types/dashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/types/dashboard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/app/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/app/login/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/app/panel/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/app/panel/page.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,7 +101,7 @@
       <workItem from="1751126019656" duration="1858000" />
       <workItem from="1751263806257" duration="5327000" />
       <workItem from="1751353944120" duration="4626000" />
-      <workItem from="1751367568250" duration="3656000" />
+      <workItem from="1751367568250" duration="7162000" />
     </task>
     <servers />
   </component>
