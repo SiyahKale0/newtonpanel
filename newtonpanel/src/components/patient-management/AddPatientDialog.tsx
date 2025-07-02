@@ -49,20 +49,19 @@ export function AddPatientDialog() {
         }
 
         try {
-            // Firebase'e gönderilecek veri objesini hazırlayalım.
-            // Omit<Patient, 'id'> tipi, 'id' hariç tüm Patient özelliklerini bekler.
+            // Firebase'e gönderilecek veri objesini `Patient` tipine uygun olarak hazırlayalım.
             const newPatientData: Omit<Patient, 'id'> = {
                 name: name,
                 age: parseInt(age, 10), // String'i sayıya çevir
                 diagnosis: diagnosis,
                 isFemale: gender === 'female',
                 note: notes,
-                // Bu alanlar için varsayılan boş değerler atıyoruz.
-                // Gelecekte bu ID'ler başka ekranlarda seçilerek atanabilir.
-                customGames: "",
+                // GÜNCELLEME: Veritabanı yapısına uygun varsayılan değerler
+                customGames: { appleGame: "", fingerDance: "" },
                 devices: [],
                 romID: "",
-                sessions: [],
+                sessionCount: 0, // Başlangıç seans sayısı
+                sessions: {},      // Başlangıçta boş bir seans objesi
             };
 
             // Servis fonksiyonunu çağırarak veriyi Firebase'e kaydet
@@ -71,12 +70,10 @@ export function AddPatientDialog() {
             alert("Hasta başarıyla kaydedildi!");
             resetForm(); // Formu temizle
             setOpen(false); // Dialog'u kapat
-            
-            // ÖNEMLİ: Sayfanın yeni hastayı gösterebilmesi için listeyi yenilemesi gerekir.
-            // Bu genellikle parent component'e bir fonksiyon prop'u geçerek yapılır
-            // veya global bir state yönetim aracı (Zustand, Redux) kullanılır.
-            // Şimdilik, en basit yöntem olarak sayfayı yenileyebiliriz:
-            window.location.reload();
+
+            // Sayfayı yenilemeye veya callback'e gerek yok.
+            // Parent component'teki `onValue` dinleyicisi bu yeni hastayı algılayıp
+            // listeyi otomatik olarak güncelleyecektir.
 
         } catch (error) {
             console.error("Hasta kaydedilirken hata oluştu:", error);
@@ -98,7 +95,6 @@ export function AddPatientDialog() {
                     <DialogTitle>Yeni Hasta Ekle</DialogTitle>
                     <DialogDescription>Yeni hasta bilgilerini girerek kaydı tamamlayın.</DialogDescription>
                 </DialogHeader>
-                {/* Form gönderimini handle etmek için <form> etiketi ekliyoruz */}
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
                     <div>
                         <Label htmlFor="name">Ad Soyad</Label>

@@ -1,28 +1,38 @@
+// src/types/firebase.ts
+
+// Her bir modele, Firebase'den gelen benzersiz anahtarı (key) saklamak için
+// bir 'id' alanı eklenmiştir. Bu, veriyi yönetmeyi kolaylaştırır.
+
 export interface Patient {
     id: string;
     age: number;
-    customGames: string
-    devices: string[];          
+    // customGames, hastanın genel oyun tercihlerini veya varsayılanlarını tutabilir.
+    customGames: {
+        appleGame: string;      // gameConfig ID
+        fingerDance: string;    // gameConfig ID
+    };
+    devices: string[];          // Hastanın kullandığı cihazların ID listesi
     diagnosis: string;
     isFemale: boolean;
     name: string;
     note: string;
-    romID: string;             
-    sessions: string[];         
+    romID: string;              // Hastanın ROM (hareket aralığı) profili ID'si
+    sessionCount: number;       // Hastanın toplam seans sayısı
+    sessions?: { [sessionId: string]: boolean }; // Hastanın katıldığı tüm seansların ID'leri
 }
 
 export interface Session {
     id: string;
-    date: string;              
-    deviceID: string;
-    endTime: string;            
-    gamesPlayed: {
-        gameID: string;
-        gameResultID: string;
-    }[];
-    patientID: string;
-    romID: string;
-    startTime: string;          
+    date: string;               // Seansın tarihi, "YYYY-AA-GG" formatında
+    deviceID: string;           // Seansın yapıldığı cihazın ID'si
+    patientID: string;          // Seansın yapıldığı hastanın ID'si
+    startTime: string;          // Seansın başlangıç zamanı, "HH:mm" formatında
+    endTime: string;            // Seansın bitiş zamanı (başlangıçta boş olabilir)
+    romID: string;              // Seans sırasında kullanılan ROM profili ID'si
+    // Bu alanlar, seans akışı sırasında doldurulur.
+    gameType?: 'appleGame' | 'fingerDance';
+    gameConfigID?: string;
+    gameResultID?: string;
 }
 
 export interface Device {
@@ -30,10 +40,11 @@ export interface Device {
     connectionStatus: 'online' | 'offline';
     deviceName: string;
     enable: boolean;
-    patientID: string;
+    patientID: string;          // Cihazın o anki kullanıcısı (hasta ID'si), boş ise müsait demek.
 }
 
-// GameConfig için birleşik bir tip (Union Type)
+// GameConfig için birleşik bir tip (Union Type).
+// Bu, hem Elma Toplama hem de Piyano oyununun ayarlarını tek bir tip altında birleştirir.
 interface BaseGameConfig {
     id: string;
     gameType: 'appleGame' | 'fingerDance';
@@ -43,7 +54,7 @@ export interface AppleGameConfig extends BaseGameConfig {
     gameType: 'appleGame';
     allowedHand: 'right' | 'left' | 'both';
     difficulty: 'easy' | 'medium' | 'hard';
-    duration: number;           
+    duration: number;           // Saniye cinsinden
     maxApples: number;
 }
 
@@ -57,7 +68,7 @@ export interface FingerDanceConfig extends BaseGameConfig {
 export type GameConfig = AppleGameConfig | FingerDanceConfig;
 
 
-
+// GameResult için birleşik bir tip
 interface BaseGameResult {
     id: string;
     gameType: 'appleGame' | 'fingerDance';
@@ -90,7 +101,7 @@ export interface FingerDanceResult extends BaseGameResult {
 export type GameResult = AppleGameResult | FingerDanceResult;
 
 
-
+// ROM (Range of Motion - Hareket Aralığı) Profili
 export interface Rom {
     id: string;
     arm: {
