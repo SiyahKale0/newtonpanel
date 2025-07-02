@@ -1,10 +1,7 @@
 export interface Patient {
     id: string;
     age: number;
-    customGames: {
-        appleGame: string;      
-        fingerDance: string;    
-    };
+    customGames: string
     devices: string[];          
     diagnosis: string;
     isFemale: boolean;

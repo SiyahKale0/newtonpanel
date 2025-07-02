@@ -4,68 +4,77 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { User, Search, Loader2 } from "lucide-react"; // Loader2 ikonu eklendi
+import { User, Search, Loader2 } from "lucide-react";
 import { AddPatientDialog } from "./patient-management/AddPatientDialog";
 import { PatientCard } from "./patient-management/PatientCard";
-import { DashboardPatient } from "@/types/dashboard"; // UI için kullanılan tip
-import { Patient } from "@/types/firebase"; // Firebase'den gelen veri tipi
-import { getAllPatients } from "@/services/patientService"; // Firebase servisimiz
+
+// Firebase ve Tipler
+import { onValue, ref } from "firebase/database";
+import { db } from "@/services/firebase";
+import { Patient as FirebasePatient } from "@/types/firebase";
+import { DashboardPatient } from "@/types/dashboard";
 
 /**
- * Firebase'den gelen ham hasta verisini, arayüzde kullanılan
- * DashboardPatient formatına dönüştürür.
+ * Ham Firebase verisini, arayüz kartlarında kullanılacak formata dönüştürür.
+ * Bu, veri katmanı ile sunum katmanını birbirinden ayırır.
+ * @param patient Firebase'den gelen ham hasta verisi.
+ * @returns Arayüz için formatlanmış hasta verisi.
  */
-function formatPatientDataForDashboard(patient: Patient): DashboardPatient {
-    // Bu fonksiyon, veritabanı verisi ile UI beklentileri arasında bir köprü kurar.
-    // Gelecekte daha karmaşık hesaplamalar (örn. ortalama skor) burada yapılabilir.
+const formatPatientForUI = (patient: FirebasePatient): DashboardPatient => {
     return {
         id: patient.id,
         name: patient.name,
         age: patient.age,
         diagnosis: patient.diagnosis,
-        // Bu veriler için şimdilik varsayılan değerler atıyoruz.
-        // İleride romID ve sessionID'ler kullanılarak bu alanlar doldurulabilir.
-        arm: patient.isFemale ? "Sol" : "Sağ", // Örnek bir mantık
-        romLimit: 60, // Varsayılan değer, roms servisinden çekilebilir
+        arm: patient.isFemale ? "Sol" : "Sağ",
+        romLimit: 60, // Bu değer ileride ROM servisinden dinamik olarak alınabilir.
         lastSession: patient.sessions?.length > 0 ? "Mevcut" : "Yok",
         totalSessions: patient.sessions?.length ?? 0,
-        avgScore: 85, // Varsayılan değer
-        improvement: "+10%", // Varsayılan değer
+        avgScore: 85, // Bu değer ileride seans sonuçlarından hesaplanabilir.
+        improvement: "+10%", // Bu değer ileride seans sonuçlarından hesaplanabilir.
         status: "active",
     };
-}
+};
 
 export function PatientManagement() {
     const [searchTerm, setSearchTerm] = useState("");
     const [patients, setPatients] = useState<DashboardPatient[]>([]);
-    const [loading, setLoading] = useState(true); // Yüklenme durumu için state
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Bileşen ilk yüklendiğinde Firebase'den verileri çekmek için useEffect kullanılır.
     useEffect(() => {
-        const fetchPatients = async () => {
+        const patientsRef = ref(db, 'patients');
+
+        // Firebase'deki 'patients' yoluna gerçek zamanlı bir dinleyici (listener) kur.
+        const unsubscribe = onValue(patientsRef, (snapshot) => {
             try {
-                setLoading(true);
-                setError(null);
-                const fetchedPatients = await getAllPatients();
-                const formattedPatients = fetchedPatients.map(formatPatientDataForDashboard);
-                setPatients(formattedPatients);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const patientList: FirebasePatient[] = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                    setPatients(patientList.map(formatPatientForUI));
+                } else {
+                    setPatients([]); // Veritabanında hiç hasta yoksa listeyi boşalt.
+                }
             } catch (err) {
-                console.error("Hastaları çekerken hata:", err);
-                setError("Hastalar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.");
+                console.error("Veri işlenirken hata oluştu:", err);
+                setError("Hastalar yüklenirken bir hata oluştu.");
             } finally {
                 setLoading(false);
             }
-        };
+        });
 
-        fetchPatients();
-    }, []); // Boş dependency array, bu etkinin sadece bir kez çalışmasını sağlar.
+        // Component ekrandan kaldırıldığında, bellek sızıntısını önlemek için dinleyiciyi kapat.
+        return () => unsubscribe();
+    }, []); // Boş bağımlılık dizisi, bu effect'in sadece bir kez çalışmasını sağlar.
 
-    const filteredPatients = patients.filter(
-        (patient) =>
-            patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            patient.diagnosis.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    // Arama terimine göre hastaları filtrele.
+    const filteredPatients = patients.filter((patient) => {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        // Defansif kodlama: 'name' ve 'diagnosis' alanlarının varlığını kontrol et.
+        const nameMatch = patient.name && patient.name.toLowerCase().includes(lowerCaseSearchTerm);
+        const diagnosisMatch = patient.diagnosis && patient.diagnosis.toLowerCase().includes(lowerCaseSearchTerm);
+        return nameMatch || diagnosisMatch;
+    });
 
     return (
         <div className="space-y-6">
@@ -79,6 +88,9 @@ export function PatientManagement() {
                         className="pl-10"
                     />
                 </div>
+                {/* Not: Gerçek zamanlı dinleyici sayesinde `onPatientAdded` callback'ine artık gerek yoktur.
+                  Yeni hasta eklendiğinde, `onValue` dinleyicisi bunu otomatik olarak algılayıp listeyi güncelleyecektir.
+                */}
                 <AddPatientDialog />
             </div>
 
@@ -100,13 +112,13 @@ export function PatientManagement() {
 
             {!loading && !error && (
                 <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {filteredPatients.map((patient) => (
-                            <PatientCard key={patient.id} patient={patient} />
-                        ))}
-                    </div>
-
-                    {filteredPatients.length === 0 && (
+                    {filteredPatients.length > 0 ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {filteredPatients.map((patient) => (
+                                <PatientCard key={patient.id} patient={patient} />
+                            ))}
+                        </div>
+                    ) : (
                         <Card>
                             <CardContent className="text-center py-12">
                                 <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />

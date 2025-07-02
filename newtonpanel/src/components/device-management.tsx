@@ -1,45 +1,94 @@
 // src/components/device-management.tsx
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff, Loader2 } from "lucide-react";
 import { AddDeviceDialog } from "./device-management/AddDeviceDialog";
 
-// Örnek veri tipleri
-interface ActiveDevice {
-    id: string;
-    name: string;
-    patientName: string;
-    gameName: string;
+// Firebase ve Tipler
+import { onValue, ref } from "firebase/database";
+import { db } from "@/services/firebase";
+import type { Device, Patient } from "@/types/firebase";
+
+// Ayrı bir servis dosyası oluşturmak yerine, bu bileşene özel olduğu için
+// hasta bilgisini çekme fonksiyonunu burada tanımlayabiliriz.
+import { getPatientById } from '@/services/patientService';
+
+// Arayüzde kullanılacak birleşik bir tip oluşturalım.
+interface ActiveDeviceInfo extends Device {
+    patientName?: string;
+    gameName?: string;
 }
-
-interface PassiveDevice {
-    id: string;
-    name: string;
-}
-
-// Örnek veriler
-const initialActiveDevices: ActiveDevice[] = [
-    { id: 'MQ001', name: 'MetaQuest-01', patientName: 'Ahmet Yılmaz', gameName: 'Elma Toplama' },
-    { id: 'MQ002', name: 'MetaQuest-02', patientName: 'Fatma Kaya', gameName: 'Piyano Egzersizi' },
-];
-
-const initialPassiveDevices: PassiveDevice[] = [
-    { id: 'MQ003', name: 'MetaQuest-03' },
-    { id: 'MQ004', name: 'MetaQuest-04' },
-    { id: 'MQ005', name: 'MetaQuest-05' },
-];
 
 export function DeviceManagement() {
-    const [activeDevices, setActiveDevices] = useState<ActiveDevice[]>(initialActiveDevices);
-    const [passiveDevices, setPassiveDevices] = useState<PassiveDevice[]>(initialPassiveDevices);
+    const [allDevices, setAllDevices] = useState<Device[]>([]);
+    const [patients, setPatients] = useState<Map<string, Patient>>(new Map());
+    const [loading, setLoading] = useState(true);
+
+    // Cihazları ve hastaları gerçek zamanlı dinle
+    useEffect(() => {
+        // Cihazları dinle
+        const devicesRef = ref(db, 'devices');
+        const unsubscribeDevices = onValue(devicesRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                const deviceList: Device[] = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+                setAllDevices(deviceList);
+            } else {
+                setAllDevices([]);
+            }
+            setLoading(false);
+        });
+
+        // Hastaları dinle (cihazlara atanan hastaların isimlerini göstermek için)
+        const patientsRef = ref(db, 'patients');
+        const unsubscribePatients = onValue(patientsRef, (snapshot) => {
+             if (snapshot.exists()) {
+                const data = snapshot.val();
+                const patientsMap = new Map<string, Patient>();
+                Object.keys(data).forEach(key => {
+                    patientsMap.set(key, { id: key, ...data[key] });
+                });
+                setPatients(patientsMap);
+            } else {
+                setPatients(new Map());
+            }
+        });
+
+
+        // Component kaldırıldığında dinleyicileri temizle
+        return () => {
+            unsubscribeDevices();
+            unsubscribePatients();
+        };
+    }, []);
+
+    // Cihazları aktif ve pasif olarak ayır
+    const activeDevices: ActiveDeviceInfo[] = allDevices
+        .filter(d => d.patientID)
+        .map(d => ({
+            ...d,
+            patientName: patients.get(d.patientID)?.name ?? 'Bilinmeyen Hasta',
+            gameName: 'Bilinmiyor' // Bu bilgi session'lardan türetilebilir
+        }));
+        
+    const passiveDevices: Device[] = allDevices.filter(d => !d.patientID);
+
+    if (loading) {
+         return (
+            <div className="flex justify-center items-center py-20">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="ml-4 text-lg text-muted-foreground">Cihazlar Yükleniyor...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">Cihaz Yönetimi</h1>
+                {/* TODO: Bu dialog'a da onDeviceAdded callback'i eklenebilir. */}
                 <AddDeviceDialog />
             </div>
 
@@ -55,8 +104,8 @@ export function DeviceManagement() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {activeDevices.map(device => (
-                            <div key={device.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                <p className="font-semibold">{device.name}</p>
+                            <div key={device.id} className="p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
+                                <p className="font-semibold">{device.deviceName}</p>
                                 <div className="text-sm text-muted-foreground">
                                     <p><span className="font-medium">Hasta:</span> {device.patientName}</p>
                                     <p><span className="font-medium">Oyun:</span> {device.gameName}</p>
@@ -81,7 +130,7 @@ export function DeviceManagement() {
                     <CardContent className="space-y-4">
                         {passiveDevices.map(device => (
                             <div key={device.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                <p className="font-semibold">{device.name}</p>
+                                <p className="font-semibold">{device.deviceName}</p>
                                 <p className="text-sm text-green-600 dark:text-green-400">Kullanıma hazır</p>
                             </div>
                         ))}
