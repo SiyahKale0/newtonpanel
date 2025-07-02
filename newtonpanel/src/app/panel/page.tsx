@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from 'next/navigation'
+import { deleteCookie } from 'cookies-next'
 import {
   Sidebar,
   SidebarContent,
@@ -14,24 +16,30 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, Activity, Settings, BarChart3, Plus, User, Target, SlidersHorizontal } from "lucide-react" // SlidersHorizontal eklendi
+import { Users, Activity, Settings, BarChart3, Plus, User, Target, SlidersHorizontal, LogOut } from "lucide-react"
 import { PatientManagement } from "@/components/patient-management"
 import { SessionCreator } from "@/components/session-creator"
 import { PerformanceAnalytics } from "@/components/performance-analytics"
 import { DashboardOverview } from "@/components/dashboard-overview"
-import { DeviceManagement } from "@/components/device-management" // Yeni Cihaz Yönetimi bileşeni
+import { DeviceManagement } from "@/components/device-management"
 
 const menuItems = [
   { title: "Genel Bakış", icon: BarChart3, id: "overview" },
   { title: "Hasta Yönetimi", icon: Users, id: "patients" },
   { title: "Seans Oluştur", icon: Plus, id: "create-session" },
   { title: "Performans Analizi", icon: Activity, id: "analytics" },
-  { title: "Cihaz Yönetimi", icon: SlidersHorizontal, id: "devices" }, // Yeni menü elemanı
+  { title: "Cihaz Yönetimi", icon: SlidersHorizontal, id: "devices" },
   { title: "Ayarlar", icon: Settings, id: "settings" },
 ]
 
 export default function PhysioXRDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
+  const router = useRouter()
+
+  const handleLogout = () => {
+    deleteCookie('auth-token', { path: '/' });
+    router.push('/login');
+  }
 
   return (
       <SidebarProvider>
@@ -83,10 +91,17 @@ export default function PhysioXRDashboard() {
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                     Sistem Aktif
                   </Badge>
-                  <Button variant="outline" size="sm">
+
+                  <Button variant="outline" size="sm" disabled>
                     <User className="w-4 h-4 mr-2" />
                     Dr. Ayşe Kaya
                   </Button>
+
+                  <Button variant="destructive" size="sm" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Çıkış Yap
+                  </Button>
+
                 </div>
               </div>
             </header>
