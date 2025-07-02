@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/app/panel/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/app/panel/page.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,7 +94,7 @@
       <workItem from="1751263806257" duration="5327000" />
       <workItem from="1751353944120" duration="4626000" />
       <workItem from="1751367568250" duration="7719000" />
-      <workItem from="1751439453070" duration="1179000" />
+      <workItem from="1751439453070" duration="3137000" />
     </task>
     <servers />
   </component>
