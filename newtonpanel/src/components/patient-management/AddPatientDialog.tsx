@@ -59,7 +59,7 @@ export function AddPatientDialog() {
                 note: notes,
                 // Bu alanlar için varsayılan boş değerler atıyoruz.
                 // Gelecekte bu ID'ler başka ekranlarda seçilerek atanabilir.
-                customGames: { appleGame: "", fingerDance: "" },
+                customGames: "",
                 devices: [],
                 romID: "",
                 sessions: [],
