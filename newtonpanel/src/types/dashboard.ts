@@ -4,7 +4,7 @@ import type React from "react";
 // Dashboard için genel tip tanımlamaları
 
 export interface DashboardPatient {
-  id: number;
+  id: string;
   name: string;
   age: number;
   diagnosis: string;

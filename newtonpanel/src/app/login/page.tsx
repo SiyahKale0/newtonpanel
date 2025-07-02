@@ -28,7 +28,7 @@ export default function DoctorLoginPage() {
         // --- YÖNLENDİRME İÇİN EN ÖNEMLİ KISIM ---
         // 1. Başarılı girişi kanıtlayan bir cookie oluştur.
         //    Bu cookie, middleware tarafından okunacak.
-        setCookie('auth-token', 'gizli-ve-guvenli-bir-token', { maxAge: 1 * 1 * 1 }); // 1 gün geçerli
+        setCookie('auth-token', 'gizli-ve-guvenli-bir-token', { maxAge: 60 * 60 * 1 }); // 1 gün geçerli
 
         // 2. Kullanıcıyı panel sayfasına yönlendir.
         router.push('/panel');
