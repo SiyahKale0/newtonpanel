@@ -34,12 +34,19 @@ const menuItems = [
 
 export default function PhysioXRDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
+  const [selectedPatientIdForAnalysis, setSelectedPatientIdForAnalysis] = useState<string | null>(null);
   const router = useRouter()
 
   const handleLogout = () => {
     deleteCookie('auth-token', { path: '/' });
     router.push('/login');
   }
+
+  // Bu fonksiyon artık PatientDetailModal içinden çağrılacak
+  const navigateToPerformance = (patientId: string) => {
+    setSelectedPatientIdForAnalysis(patientId);
+    setActiveTab("analytics");
+  };
 
   return (
       <SidebarProvider>
@@ -108,9 +115,9 @@ export default function PhysioXRDashboard() {
 
             <main className="p-6">
               {activeTab === "overview" && <DashboardOverview />}
-              {activeTab === "patients" && <PatientManagement />}
+              {activeTab === "patients" && <PatientManagement onNavigateToPerformance={navigateToPerformance} />}
               {activeTab === "create-session" && <SessionCreator />}
-              {activeTab === "analytics" && <PerformanceAnalytics />}
+              {activeTab === "analytics" && <PerformanceAnalytics selectedPatientId={selectedPatientIdForAnalysis} />}
               {activeTab === "devices" && <DeviceManagement />}
               {activeTab === "settings" && (
                   <Card>

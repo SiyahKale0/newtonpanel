@@ -1,15 +1,16 @@
-// src/components/patient-management/PatientCard.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { User, Calendar, Eye, Edit } from "lucide-react";
-import type { DashboardPatient } from "@/types/dashboard"; // type importu
+import type { DashboardPatient } from "@/types/dashboard";
 
 interface PatientCardProps {
     patient: DashboardPatient;
+    onEdit: () => void;
+    onShowDetails: () => void;
 }
 
-export function PatientCard({ patient }: PatientCardProps) {
+export function PatientCard({ patient, onEdit, onShowDetails }: PatientCardProps) {
     const statusVariant = patient.status === "active" ? "default" : "secondary";
     const statusClass = patient.status === "active" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "";
 
@@ -47,9 +48,15 @@ export function PatientCard({ patient }: PatientCardProps) {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1"><Eye className="w-4 h-4 mr-2" />Detaylar</Button>
-                        <Button variant="outline" size="sm" className="flex-1"><Edit className="w-4 h-4 mr-2" />Düzenle</Button>
-                        <Button size="sm" className="flex-1"><Calendar className="w-4 h-4 mr-2" />Seans Oluştur</Button>
+                        <Button variant="outline" size="sm" className="flex-1" onClick={onShowDetails}>
+                            <Eye className="w-4 h-4 mr-2" />Detaylar
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
+                            <Edit className="w-4 h-4 mr-2" />Düzenle
+                        </Button>
+                        <Button size="sm" className="flex-1">
+                            <Calendar className="w-4 h-4 mr-2" />Seans Oluştur
+                        </Button>
                     </div>
                 </div>
             </CardContent>
