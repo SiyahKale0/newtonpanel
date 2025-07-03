@@ -1,4 +1,3 @@
-// src/components/performance-analytics.tsx
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,10 +8,10 @@ import { TimeAnalysisChart } from "./performance-analytics/TimeAnalysisChart";
 import { LevelSuccessRateChart } from "./performance-analytics/LevelSuccessRateChart";
 import { WeeklyProgressChart } from "./performance-analytics/WeeklyProgressChart";
 
-export function PerformanceAnalytics() {
+export function PerformanceAnalytics({ selectedPatientId }: { selectedPatientId: string | null }) {
   return (
       <div className="space-y-6">
-        <PerformanceFilter />
+        <PerformanceFilter selectedPatientId={selectedPatientId} />
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="w-full sm:w-auto">
