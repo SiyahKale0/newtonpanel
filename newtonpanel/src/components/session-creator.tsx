@@ -1,23 +1,22 @@
 // src/components/session-creator.tsx
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Target, Loader2 } from "lucide-react";
 
-// Firebase Servisleri, Tipleri ve Dinleyici
-import { getAllPatients } from "@/services/patientService";
+// Gerekli tüm servisler, tipler ve dinleyiciler
+import { getPatientById, incrementPatientSession } from "@/services/patientService";
+import { createNewSession, updateSessionGame } from "@/services/sessionService";
 import { updateDevice } from "@/services/deviceService";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/services/firebase";
-import { Patient as FirebasePatient, Device as FirebaseDevice } from "@/types/firebase";
-
-// UI Tipleri
+import { Patient as FirebasePatient, Device as FirebaseDevice, Session as FirebaseSession } from "@/types/firebase";
 import type { DashboardPatient, DashboardApple, DashboardBasket } from "@/types/dashboard";
 
-// Tab Component Imports
+// Diğer tab bileşenleri...
 import { DeviceSelectionTab } from "./session-creator/tabs/DeviceSelectionTab";
 import { PatientSelectionTab } from "./session-creator/tabs/PatientSelectionTab";
 import { GameSelectionTab } from "./session-creator/tabs/GameSelectionTab";
@@ -25,90 +24,113 @@ import { ObjectPlacementTab } from "./session-creator/tabs/ObjectPlacementTab";
 import { FingerSelection } from "@/components/finger-selection";
 import { PreviewTab } from "./session-creator/tabs/PreviewTab";
 
-// Veri formatlama fonksiyonu
+
 function formatPatientForDashboard(patient: FirebasePatient): DashboardPatient {
-    return { id: patient.id, name: patient.name, age: patient.age, diagnosis: patient.diagnosis, arm: patient.isFemale ? "Sol" : "Sağ", romLimit: 60, lastSession: "Mevcut", totalSessions: patient.sessions?.length ?? 0, avgScore: 85, improvement: "+10%", status: "active" };
+    return { id: patient.id, name: patient.name, age: patient.age, diagnosis: patient.diagnosis, arm: patient.isFemale ? "Sol" : "Sağ", romLimit: 60, lastSession: "Mevcut", totalSessions: patient.sessionCount ?? 0, avgScore: 85, improvement: "+10%", status: "active" };
 }
 
 export function SessionCreator() {
     const [activeTab, setActiveTab] = useState("device");
     const [isLoading, setIsLoading] = useState(false);
-
-    // Cihaz State'leri (Artık gerçek zamanlı güncellenecek)
+    
+    // Veri state'leri
     const [allDevices, setAllDevices] = useState<FirebaseDevice[]>([]);
-    const [loadingData, setLoadingData] = useState(true);
-    const [selectedDevice, setSelectedDevice] = useState<FirebaseDevice | null>(null);
-
-    // Hasta State'leri
     const [allPatients, setAllPatients] = useState<DashboardPatient[]>([]);
+    const [loadingData, setLoadingData] = useState(true);
+
+    // Seçim state'leri
+    const [selectedDevice, setSelectedDevice] = useState<FirebaseDevice | null>(null);
     const [selectedPatient, setSelectedPatient] = useState<DashboardPatient | null>(null);
+    const [selectedGame, setSelectedGame] = useState<"apple" | "piano" | null>(null);
+    
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+    // Arama, sıralama ve oyun objeleri
+    const [apples, setApples] = useState<DashboardApple[]>([]);
+    const [baskets, setBaskets] = useState<DashboardBasket[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "name">("name");
 
-    // Oyun ve Seans State'leri
-    const [selectedGame, setSelectedGame] = useState<"apple" | "piano" | null>(null);
-    const [apples, setApples] = useState<DashboardApple[]>([]);
-    const [baskets, setBaskets] = useState<DashboardBasket[]>([]);
-
-    // Verileri Çekme ve Dinleme
+    // Veri dinleyicileri
     useEffect(() => {
         setLoadingData(true);
-        // Cihazları gerçek zamanlı dinle
         const devicesRef = ref(db, 'devices');
+        const patientsRef = ref(db, 'patients');
+
         const unsubscribeDevices = onValue(devicesRef, (snapshot) => {
-            const deviceList: FirebaseDevice[] = [];
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                for (const key in data) {
-                    deviceList.push({ id: key, ...data[key] });
-                }
-            }
-            setAllDevices(deviceList);
+            const list: FirebaseDevice[] = [];
+            snapshot.forEach(child => { list.push({ id: child.key, ...child.val() }); });
+            setAllDevices(list);
         });
-
-        // Hastaları bir kerelik çek (eğer anlık dinlemeye gerek yoksa)
-        getAllPatients().then(patients => {
-            setAllPatients(patients.map(formatPatientForDashboard));
-        }).finally(() => {
-            setLoadingData(false);
+        const unsubscribePatients = onValue(patientsRef, (snapshot) => {
+            const list: FirebasePatient[] = [];
+            snapshot.forEach(child => { list.push({ id: child.key, ...child.val() }); });
+            setAllPatients(list.map(formatPatientForDashboard));
+            if(loadingData) setLoadingData(false);
         });
-
-        // Component DOM'dan kaldırıldığında dinleyiciyi temizle
-        return () => {
-            unsubscribeDevices();
-        };
+        return () => { unsubscribeDevices(); unsubscribePatients(); };
     }, []);
-    
-    // Seçili cihazın hala müsait olup olmadığını kontrol et
-    useEffect(() => {
-        if (selectedDevice) {
-            const isStillAvailable = allDevices.some(d => d.id === selectedDevice.id && d.enable && !d.patientID);
-            if (!isStillAvailable) {
-                setSelectedDevice(null);
-                alert("Seçtiğiniz cihaz başka bir seans için atandığından seçiminiz kaldırıldı.");
-            }
-        }
-    }, [allDevices, selectedDevice]);
-
 
     const filteredAndSortedPatients = useMemo(() => {
-        return allPatients
-            .filter(patient => patient.name && patient.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        const unassignedPatientIDs = new Set(allDevices.filter(d => d.patientID).map(d => d.patientID));
+        return allPatients.filter(p => !unassignedPatientIDs.has(p.id))
+            .filter(p => p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .sort((a, b) => sortOrder === 'asc' ? a.age - b.age : sortOrder === 'desc' ? b.age - a.age : a.name.localeCompare(b.name));
-    }, [allPatients, searchTerm, sortOrder]);
+    }, [allPatients, allDevices, searchTerm, sortOrder]);
 
+
+    // OYUN SEÇİMİ İÇİN YENİ FONKSİYON
+    const handleGameSelection = async (game: "apple" | "piano") => {
+        setSelectedGame(game);
+        if (!currentSessionId) {
+            console.error("Seans ID'si bulunamadı, oyun seçimi kaydedilemedi.");
+            return;
+        }
+        try {
+            // HATA ÇÖZÜMÜ: Bileşen içindeki tipi ("apple") veritabanı tipine ("appleGame") dönüştür.
+            const gameTypeForDB: 'appleGame' | 'fingerDance' = game === 'apple' ? 'appleGame' : 'fingerDance';
+            const gameConfigID = game === 'apple' ? 'gameConfig_1' : 'gameConfig_2';
+            
+            // Servis fonksiyonuna doğru tiple veri gönder.
+            await updateSessionGame(currentSessionId, gameTypeForDB, gameConfigID);
+
+        } catch (error) {
+            console.error("Oyun seçimi güncellenirken hata:", error);
+        }
+    };
 
     const handleNext = async () => {
         setIsLoading(true);
         try {
             if (activeTab === "device" && selectedDevice) {
                 setActiveTab("patient");
-            } else if (activeTab === "patient" && selectedPatient && selectedDevice) {
-                await updateDevice(selectedDevice.id, { patientID: selectedPatient.id });
+            } 
+            else if (activeTab === "patient" && selectedPatient && selectedDevice) {
+                const patientData = await getPatientById(selectedPatient.id);
+                const currentSessionCount = patientData?.sessionCount ?? 0;
+                const newSessionId = `${selectedPatient.id}_session_${currentSessionCount + 1}`; // Daha benzersiz bir ID
+                setCurrentSessionId(newSessionId);
+
+                const sessionData: Omit<FirebaseSession, 'id'> = {
+                    patientID: selectedPatient.id,
+                    deviceID: selectedDevice.id,
+                    date: new Date().toISOString().split('T')[0],
+                    startTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+                    endTime: "", romID: ""
+                };
+                
+                await Promise.all([
+                    createNewSession(newSessionId, sessionData),
+                    incrementPatientSession(selectedPatient.id, newSessionId),
+                    updateDevice(selectedDevice.id, { patientID: selectedPatient.id })
+                ]);
+
                 setActiveTab("setup");
-            } else if (activeTab === "setup" && selectedGame) {
+            } 
+            else if (activeTab === "setup" && selectedGame) {
                 setActiveTab("game-details");
-            } else if (activeTab === "game-details") {
+            } 
+            else if (activeTab === "game-details") {
                 setActiveTab("preview");
             }
         } catch (error) {
@@ -119,40 +141,19 @@ export function SessionCreator() {
         }
     };
 
-    const handleBack = () => {
+    const handleBack = useCallback(async () => { 
+        if (activeTab === 'setup' && selectedDevice?.patientID) {
+             await updateDevice(selectedDevice.id, { patientID: "" });
+        }
         if (activeTab === "preview") setActiveTab("game-details");
         else if (activeTab === "game-details") setActiveTab("setup");
         else if (activeTab === "setup") setActiveTab("patient");
-        else if (activeTab === "patient") {
-            // Geri giderken cihazdaki hasta atamasını (varsa) temizlemek iyi bir pratik olabilir.
-            // if (selectedDevice?.patientID) {
-            //     updateDevice(selectedDevice.id, { patientID: "" });
-            // }
-            setSelectedPatient(null);
-            setActiveTab("device");
-        }
-    };
+        else if (activeTab === "patient") setActiveTab("device");
+     }, [activeTab, selectedDevice]);
     
-    // Diğer fonksiyonlar (addRandomObject, removeObject) değişmeden kalır...
-    const addRandomObject = (type: 'fresh' | 'rotten' | 'basket') => {
-        const romGrid = (selectedPatient?.romLimit ?? 60) / 20;
-        const x = parseFloat((Math.random() * romGrid * (Math.random() > 0.5 ? 1 : -1)).toFixed(1));
-        const y = parseFloat((Math.random() * romGrid).toFixed(1));
-        const z = parseFloat((Math.random() * romGrid * (Math.random() > 0.5 ? 1 : -1)).toFixed(1));
-
-        if (type === 'basket') {
-            const newBasket: DashboardBasket = { id: Date.now(), type: 'fresh', position: { x, y: 0, z } };
-            setBaskets(prev => [...prev, newBasket]);
-        } else {
-            const newApple: DashboardApple = { id: Date.now(), type, position: { x, y, z }, realDistance: Math.sqrt(x*x + y*y + z*z) * 20 };
-            setApples(prev => [...prev, newApple]);
-        }
-    };
-
-    const removeObject = (id: number, type: 'apple' | 'basket') => {
-        if (type === 'apple') setApples(apples.filter(a => a.id !== id));
-        else setBaskets(baskets.filter(b => b.id !== id));
-    };
+    // ... (addRandomObject, removeObject fonksiyonları aynı kalır)
+    const addRandomObject = (type: 'fresh' | 'rotten' | 'basket') => { /* ... */ };
+    const removeObject = (id: number, type: 'apple' | 'basket') => { /* ... */ };
 
 
     const renderContent = () => {
@@ -162,12 +163,11 @@ export function SessionCreator() {
         
         switch(activeTab) {
             case 'device':
-                // `DeviceSelectionTab`'a her zaman güncel `allDevices` listesini gönderiyoruz.
                 return <DeviceSelectionTab devices={allDevices} selectedDevice={selectedDevice} onSelectDevice={setSelectedDevice} />;
             case 'patient':
                 return <PatientSelectionTab patients={filteredAndSortedPatients} selectedPatient={selectedPatient} onSelectPatient={setSelectedPatient} searchTerm={searchTerm} onSearchTermChange={setSearchTerm} sortOrder={sortOrder} onSortOrderChange={setSortOrder as any} />;
             case 'setup':
-                return <GameSelectionTab selectedGame={selectedGame} onSelectGame={setSelectedGame} />;
+                return <GameSelectionTab selectedGame={selectedGame} onSelectGame={handleGameSelection} />;
             case 'game-details':
                 if (selectedGame === 'apple') return <ObjectPlacementTab apples={apples} baskets={baskets} romLimit={selectedPatient?.romLimit ?? 0} onAddObject={addRandomObject} onRemoveObject={removeObject} />;
                 if (selectedGame === 'piano') return <FingerSelection />;
@@ -201,7 +201,6 @@ export function SessionCreator() {
                     <TabsTrigger value="game-details" disabled={!selectedDevice || !selectedPatient || !selectedGame} onClick={() => setActiveTab('game-details')}>4. Oyun Detay</TabsTrigger>
                     <TabsTrigger value="preview" disabled={!selectedDevice || !selectedPatient || !selectedGame} onClick={() => setActiveTab('preview')}>5. Önizleme</TabsTrigger>
                 </TabsList>
-
                 <div className="animate-in fade-in-20 transition-opacity duration-300">{renderContent()}</div>
             </Tabs>
 

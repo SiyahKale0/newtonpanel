@@ -1,9 +1,11 @@
 // src/services/firebase.ts
 
+// Firebase'in temel kütüphanelerini import et
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
-// Projenizin Firebase konfigürasyon bilgileri
+// Projenizin Firebase yapılandırma bilgileri.
+// Bu bilgiler Firebase projenizin ayarlar sayfasından alınır.
 const firebaseConfig = {
     apiKey: "AIzaSyBBG0dsK1GZL407sOgVtriG829Aadnjy-o",
     authDomain: "unityrehabilitationar.firebaseapp.com",
@@ -15,8 +17,15 @@ const firebaseConfig = {
     measurementId: "G-YE1WEJKK63"
 };
 
-// Sunucu tarafında render alırken oluşabilecek hataları engellemek için kontrol
+// Firebase uygulamasını başlatmak için bir kontrol mekanizması.
+// Eğer daha önce bir uygulama başlatılmamışsa, yenisini başlat.
+// Bu, Next.js gibi ortamlarda sayfa yenilendiğinde "Firebase App is already initialized"
+// hatasını almayı önler.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Firebase Realtime Database servisine erişimi sağla.
 const db = getDatabase(app);
 
+// Başlatılan uygulama (app) ve veritabanı (db) nesnelerini
+// projenin diğer kısımlarında kullanabilmek için dışa aktar.
 export { app, db };

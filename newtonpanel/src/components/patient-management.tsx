@@ -21,6 +21,9 @@ import { DashboardPatient } from "@/types/dashboard";
  * @returns Arayüz için formatlanmış hasta verisi.
  */
 const formatPatientForUI = (patient: FirebasePatient): DashboardPatient => {
+    // GÜNCELLEME: `sessions` bir obje olduğu için, seans sayısını `Object.keys` ile saymak daha doğrudur.
+    const sessionCount = patient.sessions ? Object.keys(patient.sessions).length : 0;
+
     return {
         id: patient.id,
         name: patient.name,
@@ -28,8 +31,8 @@ const formatPatientForUI = (patient: FirebasePatient): DashboardPatient => {
         diagnosis: patient.diagnosis,
         arm: patient.isFemale ? "Sol" : "Sağ",
         romLimit: 60, // Bu değer ileride ROM servisinden dinamik olarak alınabilir.
-        lastSession: patient.sessions?.length > 0 ? "Mevcut" : "Yok",
-        totalSessions: patient.sessions?.length ?? 0,
+        lastSession: sessionCount > 0 ? "Mevcut" : "Yok",
+        totalSessions: sessionCount,
         avgScore: 85, // Bu değer ileride seans sonuçlarından hesaplanabilir.
         improvement: "+10%", // Bu değer ileride seans sonuçlarından hesaplanabilir.
         status: "active",
@@ -48,13 +51,15 @@ export function PatientManagement() {
         // Firebase'deki 'patients' yoluna gerçek zamanlı bir dinleyici (listener) kur.
         const unsubscribe = onValue(patientsRef, (snapshot) => {
             try {
+                const patientList: FirebasePatient[] = [];
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    const patientList: FirebasePatient[] = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                    setPatients(patientList.map(formatPatientForUI));
-                } else {
-                    setPatients([]); // Veritabanında hiç hasta yoksa listeyi boşalt.
+                    // Firebase'den gelen objeyi diziye çevir.
+                    for (const key in data) {
+                        patientList.push({ id: key, ...data[key] });
+                    }
                 }
+                setPatients(patientList.map(formatPatientForUI));
             } catch (err) {
                 console.error("Veri işlenirken hata oluştu:", err);
                 setError("Hastalar yüklenirken bir hata oluştu.");
@@ -88,8 +93,9 @@ export function PatientManagement() {
                         className="pl-10"
                     />
                 </div>
-                {/* Not: Gerçek zamanlı dinleyici sayesinde `onPatientAdded` callback'ine artık gerek yoktur.
-                  Yeni hasta eklendiğinde, `onValue` dinleyicisi bunu otomatik olarak algılayıp listeyi güncelleyecektir.
+                {/* `AddPatientDialog` artık bir callback prop'una ihtiyaç duymuyor.
+                  Yeni hasta eklendiğinde, `onValue` dinleyicisi değişikliği otomatik olarak yakalar
+                  ve `patients` state'ini güncelleyerek arayüzü yeniler. Bu daha temiz bir yaklaşımdır.
                 */}
                 <AddPatientDialog />
             </div>
