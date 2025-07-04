@@ -33,6 +33,21 @@ export interface Session {
     gameType?: 'appleGame' | 'fingerDance';
     gameConfigID?: string;
     gameResultID?: string;
+    // Enhanced session logging
+    preRomID?: string;          // ROM measurement before session
+    postRomID?: string;         // ROM measurement after session
+    sessionLog?: {
+        calibrationTime: number; // Milliseconds
+        gameTime: number;        // Milliseconds
+        restTime: number;        // Milliseconds
+        totalTime: number;       // Milliseconds
+    };
+    performanceMetrics?: {
+        averageAccuracy: number;
+        improvementFromLastSession: number;
+        fatigueFactor: number;   // 0-1 scale
+        motivationLevel: number; // 1-10 scale
+    };
 }
 
 export interface Device {
@@ -61,8 +76,10 @@ export interface AppleGameConfig extends BaseGameConfig {
 export interface FingerDanceConfig extends BaseGameConfig {
     gameType: 'fingerDance';
     song: string;
+    difficulty: 'easy' | 'medium' | 'hard';
     speed: number;
     targetFingers: number[];
+    totalNotes?: number;           // Total notes in the song
 }
 
 export type GameConfig = AppleGameConfig | FingerDanceConfig;
@@ -88,8 +105,29 @@ export interface AppleGameResult extends BaseGameResult {
 
 export interface FingerDanceResult extends BaseGameResult {
     gameType: 'fingerDance';
-    combo: number;
-    mistakes: number;
+    songName: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+    totalNotes: number;
+    hitNotes: number;
+    missedNotes: number;
+    accuracy: number;               // hitNotes / totalNotes
+    maxCombo: number;
+    fingerPerformance: {
+        finger1: { hits: number; misses: number; accuracy: number; };  // Thumb
+        finger2: { hits: number; misses: number; accuracy: number; };  // Index
+        finger3: { hits: number; misses: number; accuracy: number; };  // Middle
+        finger4: { hits: number; misses: number; accuracy: number; };  // Ring
+        finger5: { hits: number; misses: number; accuracy: number; };  // Pinky
+    };
+    fingerMovementLogID?: string;   // Reference to FingerMovementLog
+    timing: {
+        startTime: string;          // ISO timestamp
+        endTime: string;            // ISO timestamp  
+        duration: number;           // Milliseconds
+    };
+    // Legacy fields for backward compatibility
+    combo: number;                  // Same as maxCombo
+    mistakes: number;               // Same as missedNotes
     notes: {
         finger: number;
         hit: boolean;
@@ -104,6 +142,9 @@ export type GameResult = AppleGameResult | FingerDanceResult;
 // ROM (Range of Motion - Hareket Aralığı) Profili
 export interface Rom {
     id: string;
+    patientID: string;
+    measurementDate: string;        // ISO timestamp
+    // Legacy fields for backward compatibility
     arm: {
         leftSpace: number;
         rightSpace: number;
@@ -112,4 +153,40 @@ export interface Rom {
         leftFingers: { max: number; min: number }[];
         rightFingers: { max: number; min: number }[];
     };
+    // Enhanced ROM data structure
+    fingerRanges: {
+        thumb: {
+            flexion: number;        // Degrees
+            extension: number;      // Degrees
+            abduction: number;      // Degrees
+        };
+        index: {
+            flexion: number;
+            extension: number;
+            abduction: number;
+        };
+        middle: {
+            flexion: number;
+            extension: number;
+            abduction: number;
+        };
+        ring: {
+            flexion: number;
+            extension: number;
+            abduction: number;
+        };
+        pinky: {
+            flexion: number;
+            extension: number;
+            abduction: number;
+        };
+    };
+    wristRange: {
+        flexion: number;            // Degrees
+        extension: number;          // Degrees
+        ulnarDeviation: number;     // Degrees
+        radialDeviation: number;    // Degrees
+    };
+    gripStrength: number;           // kg or pounds
+    notes: string;                  // Clinical notes
 }
