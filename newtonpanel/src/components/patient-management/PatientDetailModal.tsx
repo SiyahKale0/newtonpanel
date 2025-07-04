@@ -17,6 +17,7 @@ import { getAllSessions } from '@/services/sessionService';
 import { getAllGameResults } from '@/services/gameResultService';
 import { getRomById } from '@/services/romService';
 import { GameStatisticsModal } from './GameStatisticsModal';
+import { mockGameResults } from './mockGameResults';
 
 // ===================================================================
 //                        Detay Kartı Bileşeni
@@ -165,7 +166,24 @@ export function PatientDetailModal({ patient, open, onOpenChange, onNavigateToPe
 
                     const patientSessionIds = new Set(Object.keys(patient.sessions || {}));
                     setSessions(allSessions.filter(s => patientSessionIds.has(s.id)));
-                    setGameResults(allResults);
+                    
+                    // Add mock game results for the first two sessions for demonstration
+                    const enhancedResults = [...allResults];
+                    const filteredSessions = allSessions.filter(s => patientSessionIds.has(s.id));
+                    if (filteredSessions.length > 0) {
+                        enhancedResults.push({
+                            ...mockGameResults[0],
+                            sessionID: filteredSessions[0].id
+                        });
+                    }
+                    if (filteredSessions.length > 1) {
+                        enhancedResults.push({
+                            ...mockGameResults[1],
+                            sessionID: filteredSessions[1].id
+                        });
+                    }
+                    
+                    setGameResults(enhancedResults);
                     setRomData(rom);
                 } catch (error) {
                     console.error("Detay verileri çekilirken hata:", error);
