@@ -24,9 +24,10 @@ interface HandProps extends React.ComponentPropsWithoutRef<'group'> {
     isRightHand?: boolean;
     selectedFingers: string[];
     onFingerClick: (name: string) => void;
+    fingerColors?: Record<string, string>; // New prop for heat map colors
 }
 
-export function Hand({ isRightHand = false, selectedFingers, onFingerClick, ...props }: HandProps) {
+export function Hand({ isRightHand = false, selectedFingers, onFingerClick, fingerColors, ...props }: HandProps) {
     const side = isRightHand ? 1 : -1;
     const handSideName = isRightHand ? 'Sağ' : 'Sol';
 
@@ -55,6 +56,7 @@ export function Hand({ isRightHand = false, selectedFingers, onFingerClick, ...p
                             segments={data.segments} // Bu satır artık hata vermeyecek
                             selected={selectedFingers.includes(fullName)}
                             onClick={onFingerClick}
+                            color={fingerColors?.[fullName]}
                         />
                     </group>
                 )

@@ -9,19 +9,21 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     BarChart3, Loader2, ArrowUpDown, X, User, Activity, FileText,
-    ChevronDown, Gamepad2, Clock, CheckCircle, XCircle, Target, Trophy, GitBranch, Stethoscope
+    ChevronDown, Gamepad2, Clock, CheckCircle, XCircle, Target, Trophy, GitBranch, Stethoscope, PieChart
 } from 'lucide-react';
 import { Patient, Session, GameResult, Rom } from '@/types/firebase';
 
 import { getAllSessions } from '@/services/sessionService';
 import { getAllGameResults } from '@/services/gameResultService';
 import { getRomById } from '@/services/romService';
+import { GameStatisticsModal } from './GameStatisticsModal';
 
 // ===================================================================
 //                        Detay Kartı Bileşeni
 // ===================================================================
-function SessionDetailCard({ session, gameResult }: { session: Session; gameResult: GameResult | undefined }) {
+function SessionDetailCard({ session, gameResult, romData }: { session: Session; gameResult: GameResult | undefined; romData: Rom | null }) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [showGameStats, setShowGameStats] = useState(false);
 
     const getGameName = (gameType: string | undefined) => {
         if (gameType === 'appleGame') return { name: 'Elma Toplama', icon: Target };
@@ -99,8 +101,35 @@ function SessionDetailCard({ session, gameResult }: { session: Session; gameResu
                         <div className="border-t pt-2">
                             <GameDetails />
                         </div>
+                        {gameResult && (
+                            <div className="border-t pt-3">
+                                <Button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowGameStats(true);
+                                    }}
+                                    size="sm"
+                                    className="w-full"
+                                    variant="outline"
+                                >
+                                    <PieChart className="w-4 h-4 mr-2" />
+                                    Oyun İstatistikleri
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
+            )}
+            
+            {/* Game Statistics Modal */}
+            {gameResult && (
+                <GameStatisticsModal
+                    session={session}
+                    gameResult={gameResult}
+                    romData={romData}
+                    open={showGameStats}
+                    onOpenChange={setShowGameStats}
+                />
             )}
         </Card>
     );
@@ -241,12 +270,12 @@ export function PatientDetailModal({ patient, open, onOpenChange, onNavigateToPe
                                 <div className="space-y-3">
                                     {sortedSessions.length > 0 ? sortedSessions.map(session => {
                                         const result = gameResults.find(r => r.sessionID === session.id);
-                                        return <SessionDetailCard key={session.id} session={session} gameResult={result} />
+                                        return <SessionDetailCard key={session.id} session={session} gameResult={result} romData={romData} />
                                     }) : (
                                         <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground bg-white dark:bg-gray-800/50 rounded-lg border-2 border-dashed">
                                             <Stethoscope className="w-12 h-12 mb-4 text-gray-400"/>
                                             <h4 className="font-semibold text-lg">Seans Bulunamadı</h4>
-                                            <p className="text-sm max-w-xs">Bu hastaya ait kaydedilmiş bir seans bulunmuyor. "Seans Oluştur" sayfasından yeni bir seans başlatabilirsiniz.</p>
+                                            <p className="text-sm max-w-xs">Bu hastaya ait kaydedilmiş bir seans bulunmuyor. &quot;Seans Oluştur&quot; sayfasından yeni bir seans başlatabilirsiniz.</p>
                                         </div>
                                     )}
                                 </div>
