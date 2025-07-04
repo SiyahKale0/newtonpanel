@@ -19,9 +19,10 @@ import { Badge } from "@/components/ui/badge"
 import { Users, Activity, Settings, BarChart3, Plus, User, Target, SlidersHorizontal, LogOut } from "lucide-react"
 import { PatientManagement } from "@/components/patient-management"
 import { SessionCreator } from "@/components/session-creator"
-import { PerformanceAnalytics } from "@/components/performance-analytics"
+import  PerformanceAnalytics  from "@/components/performance-analytics"
 import { DashboardOverview } from "@/components/dashboard-overview"
 import { DeviceManagement } from "@/components/device-management"
+
 
 const menuItems = [
   { title: "Genel Bakış", icon: BarChart3, id: "overview" },
