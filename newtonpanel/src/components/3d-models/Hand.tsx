@@ -3,9 +3,9 @@ import * as React from 'react';
 import { RoundedBox, Sphere, Text } from "@react-three/drei";
 import { Finger } from './Finger';
 import { skinMaterial } from './materials';
+import * as THREE from 'three'; // THREE'yi import et
 
-// --- ÇÖZÜM İÇİN EKLENEN KISIM ---
-// Veri yapımızın tiplerini en başta net bir şekilde tanımlıyoruz.
+// --- TİP TANIMLAMALARI ---
 interface FingerSegment {
     pos: [number, number, number];
     rot: [number, number, number];
@@ -17,20 +17,20 @@ interface FingerDefinition {
     baseRot: [number, number, number];
     segments: FingerSegment[];
 }
-// --- TİP TANIMLAMALARI SONU ---
 
-
+// --- HandProps GÜNCELLEMESİ ---
 interface HandProps extends React.ComponentPropsWithoutRef<'group'> {
     isRightHand?: boolean;
     selectedFingers: string[];
     onFingerClick: (name: string) => void;
+    // YENİ PROP EKLENDİ
+    fingerColors?: { [key: string]: THREE.Color | string };
 }
 
-export function Hand({ isRightHand = false, selectedFingers, onFingerClick, ...props }: HandProps) {
+export function Hand({ isRightHand = false, selectedFingers, onFingerClick, fingerColors = {}, ...props }: HandProps) {
     const side = isRightHand ? 1 : -1;
     const handSideName = isRightHand ? 'Sağ' : 'Sol';
 
-    // Tanımladığımız tipleri burada kullanarak TypeScript'e yol gösteriyoruz.
     const fingerDefinitions: Record<string, FingerDefinition> = {
         "Başparmak": { basePos: [-0.5 * side, 0.1, 0.1], baseRot: [0, 0, 0.9 * side], segments: [{ pos: [0, 0.2, 0], rot: [0, 0, 0], args: [0.2, 0.4, 0.2] }, { pos: [0, 0.45, 0], rot: [0, 0, 0.2 * side], args: [0.18, 0.3, 0.18] }] },
         "İşaret Parmağı": { basePos: [-0.25 * side, 0.6, 0], baseRot: [0, 0, 0.05 * side], segments: [{ pos: [0, 0, 0], rot: [0, 0, 0], args: [0.2, 0.4, 0.2] }, { pos: [0, 0.3, 0], rot: [0, 0, 0], args: [0.18, 0.35, 0.18] }, { pos: [0, 0.57, 0], rot: [0, 0, 0], args: [0.16, 0.25, 0.16] }] },
@@ -52,9 +52,11 @@ export function Hand({ isRightHand = false, selectedFingers, onFingerClick, ...p
                     <group key={fullName} position={data.basePos} rotation={data.baseRot}>
                         <Finger
                             name={fullName}
-                            segments={data.segments} // Bu satır artık hata vermeyecek
+                            segments={data.segments}
                             selected={selectedFingers.includes(fullName)}
                             onClick={onFingerClick}
+                            // YENİ RENK PROP'U BURADAN GÖNDERİLİYOR
+                            color={fingerColors[fullName]}
                         />
                     </group>
                 )
