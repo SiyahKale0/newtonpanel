@@ -88,14 +88,57 @@ export interface AppleGameResult extends BaseGameResult {
 
 export interface FingerDanceResult extends BaseGameResult {
     gameType: 'fingerDance';
-    combo: number;
-    mistakes: number;
-    notes: {
+    songName: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+    totalNotes: number;
+    hitNotes: number;
+    missedNotes: number;
+    accuracy: number;
+    maxCombo: number;
+    fingerPerformance: {
+        finger1: FingerStats;
+        finger2: FingerStats;
+        finger3: FingerStats;
+        finger4: FingerStats;
+        finger5: FingerStats;
+    };
+    fingerMovementLog: FingerMovement[];
+    timing: {
+        startTime: string;
+        endTime: string;
+        duration: number;
+    };
+    // Legacy fields for backward compatibility
+    combo?: number;
+    mistakes?: number;
+    notes?: {
         finger: number;
         hit: boolean;
         note: string;
         time: number;
     }[];
+}
+
+export interface FingerStats {
+    hits: number;
+    misses: number;
+    accuracy: number;
+}
+
+export interface FingerMovement {
+    timestamp: number;
+    targetFinger: number;
+    actualFingers: number[];
+    fingerPositions: {
+        thumb: string;
+        index: string;
+        middle: string;
+        ring: string;
+        pinky: string;
+    };
+    hit: boolean;
+    timing: 'perfect' | 'good' | 'miss';
+    score: number;
 }
 
 export type GameResult = AppleGameResult | FingerDanceResult;
@@ -112,4 +155,32 @@ export interface Rom {
         leftFingers: { max: number; min: number }[];
         rightFingers: { max: number; min: number }[];
     };
+}
+
+export interface DetailedRom {
+    patientID: string;
+    measurementDate: string;
+    fingerRanges: {
+        thumb: FingerRange;
+        index: FingerRange;
+        middle: FingerRange;
+        ring: FingerRange;
+        pinky: FingerRange;
+    };
+    wristRange: WristRange;
+    gripStrength: number;
+    notes: string;
+}
+
+export interface FingerRange {
+    flexion: number;
+    extension: number;
+    abduction: number;
+}
+
+export interface WristRange {
+    flexion: number;
+    extension: number;
+    ulnarDeviation: number;
+    radialDeviation: number;
 }

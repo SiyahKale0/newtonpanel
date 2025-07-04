@@ -1,0 +1,243 @@
+{
+  "_comment": "FingerDance Position Log Format - Adapted from Apple Game position_log.json",
+  "sessionInfo": {
+    "sessionID": "session_123456",
+    "patientID": "patient_001",
+    "gameType": "fingerDance",
+    "songName": "Easy Practice Song",
+    "difficulty": "easy",
+    "startTime": "2024-01-15T10:30:00Z",
+    "endTime": "2024-01-15T10:33:30Z",
+    "totalDuration": 210
+  },
+  "fingerPositions": [
+    {
+      "timestamp": 1000,
+      "frameId": 1,
+      "targetNote": {
+        "finger": 1,
+        "note": "C4",
+        "expectedTiming": 1000
+      },
+      "detectedFingers": {
+        "thumb": {
+          "position": "down",
+          "confidence": 0.95,
+          "coordinates": { "x": 120, "y": 200, "z": 10 }
+        },
+        "index": {
+          "position": "up",
+          "confidence": 0.87,
+          "coordinates": { "x": 140, "y": 180, "z": 5 }
+        },
+        "middle": {
+          "position": "up",
+          "confidence": 0.92,
+          "coordinates": { "x": 160, "y": 175, "z": 3 }
+        },
+        "ring": {
+          "position": "up",
+          "confidence": 0.89,
+          "coordinates": { "x": 180, "y": 180, "z": 4 }
+        },
+        "pinky": {
+          "position": "up",
+          "confidence": 0.83,
+          "coordinates": { "x": 200, "y": 185, "z": 6 }
+        }
+      },
+      "analysis": {
+        "correctFinger": true,
+        "timing": "perfect",
+        "timingDifference": 0,
+        "score": 100,
+        "hit": true
+      }
+    },
+    {
+      "timestamp": 1500,
+      "frameId": 2,
+      "targetNote": {
+        "finger": 2,
+        "note": "D4",
+        "expectedTiming": 1500
+      },
+      "detectedFingers": {
+        "thumb": {
+          "position": "up",
+          "confidence": 0.93,
+          "coordinates": { "x": 118, "y": 195, "z": 8 }
+        },
+        "index": {
+          "position": "down",
+          "confidence": 0.91,
+          "coordinates": { "x": 142, "y": 185, "z": 12 }
+        },
+        "middle": {
+          "position": "up",
+          "confidence": 0.88,
+          "coordinates": { "x": 158, "y": 178, "z": 4 }
+        },
+        "ring": {
+          "position": "up",
+          "confidence": 0.86,
+          "coordinates": { "x": 178, "y": 182, "z": 5 }
+        },
+        "pinky": {
+          "position": "up",
+          "confidence": 0.81,
+          "coordinates": { "x": 198, "y": 188, "z": 7 }
+        }
+      },
+      "analysis": {
+        "correctFinger": true,
+        "timing": "good",
+        "timingDifference": 50,
+        "score": 85,
+        "hit": true
+      }
+    },
+    {
+      "timestamp": 2000,
+      "frameId": 3,
+      "targetNote": {
+        "finger": 3,
+        "note": "E4",
+        "expectedTiming": 2000
+      },
+      "detectedFingers": {
+        "thumb": {
+          "position": "up",
+          "confidence": 0.90,
+          "coordinates": { "x": 115, "y": 198, "z": 6 }
+        },
+        "index": {
+          "position": "up",
+          "confidence": 0.89,
+          "coordinates": { "x": 138, "y": 183, "z": 7 }
+        },
+        "middle": {
+          "position": "down",
+          "confidence": 0.94,
+          "coordinates": { "x": 162, "y": 181, "z": 15 }
+        },
+        "ring": {
+          "position": "up",
+          "confidence": 0.87,
+          "coordinates": { "x": 182, "y": 185, "z": 4 }
+        },
+        "pinky": {
+          "position": "up",
+          "confidence": 0.84,
+          "coordinates": { "x": 202, "y": 190, "z": 5 }
+        }
+      },
+      "analysis": {
+        "correctFinger": true,
+        "timing": "perfect",
+        "timingDifference": -10,
+        "score": 95,
+        "hit": true
+      }
+    },
+    {
+      "timestamp": 2800,
+      "frameId": 4,
+      "targetNote": {
+        "finger": 4,
+        "note": "F4",
+        "expectedTiming": 2500
+      },
+      "detectedFingers": {
+        "thumb": {
+          "position": "up",
+          "confidence": 0.88,
+          "coordinates": { "x": 112, "y": 201, "z": 5 }
+        },
+        "index": {
+          "position": "up",
+          "confidence": 0.85,
+          "coordinates": { "x": 135, "y": 186, "z": 6 }
+        },
+        "middle": {
+          "position": "up",
+          "confidence": 0.86,
+          "coordinates": { "x": 158, "y": 184, "z": 4 }
+        },
+        "ring": {
+          "position": "down",
+          "confidence": 0.89,
+          "coordinates": { "x": 185, "y": 188, "z": 14 }
+        },
+        "pinky": {
+          "position": "up",
+          "confidence": 0.82,
+          "coordinates": { "x": 205, "y": 193, "z": 6 }
+        }
+      },
+      "analysis": {
+        "correctFinger": true,
+        "timing": "miss",
+        "timingDifference": 300,
+        "score": 0,
+        "hit": false
+      }
+    }
+  ],
+  "gameResults": {
+    "totalNotes": 4,
+    "hitNotes": 3,
+    "missedNotes": 1,
+    "accuracy": 75.0,
+    "score": 280,
+    "maxCombo": 3,
+    "fingerPerformance": {
+      "finger1": {
+        "hits": 1,
+        "misses": 0,
+        "accuracy": 100.0
+      },
+      "finger2": {
+        "hits": 1,
+        "misses": 0,
+        "accuracy": 100.0
+      },
+      "finger3": {
+        "hits": 1,
+        "misses": 0,
+        "accuracy": 100.0
+      },
+      "finger4": {
+        "hits": 0,
+        "misses": 1,
+        "accuracy": 0.0
+      },
+      "finger5": {
+        "hits": 0,
+        "misses": 0,
+        "accuracy": 0.0
+      }
+    },
+    "timing": {
+      "startTime": "2024-01-15T10:30:00Z",
+      "endTime": "2024-01-15T10:33:30Z",
+      "duration": 210
+    }
+  },
+  "metadata": {
+    "version": "1.0",
+    "created": "2024-01-15T10:33:35Z",
+    "deviceInfo": {
+      "deviceId": "device_001",
+      "cameraResolution": "1920x1080",
+      "frameRate": 30,
+      "processingLatency": 15
+    },
+    "calibration": {
+      "fingerDetectionThreshold": 0.8,
+      "timingTolerancePerfect": 50,
+      "timingToleranceGood": 150,
+      "coordinateSystem": "relative"
+    }
+  }
+}
