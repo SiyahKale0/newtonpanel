@@ -1,0 +1,101 @@
+[
+  {
+    "timestamp": 1642291200000,
+    "appleId": 1,
+    "position": {
+      "x": 1.2,
+      "y": 0.5,
+      "z": 2.1
+    },
+    "status": "spawned",
+    "type": "fresh"
+  },
+  {
+    "timestamp": 1642291203000,
+    "appleId": 1,
+    "position": {
+      "x": 1.18,
+      "y": 0.48,
+      "z": 2.05
+    },
+    "status": "grabbed",
+    "type": "fresh"
+  },
+  {
+    "timestamp": 1642291205000,
+    "appleId": 1,
+    "position": {
+      "x": 0.8,
+      "y": 0.3,
+      "z": 1.5
+    },
+    "status": "collected",
+    "type": "fresh"
+  },
+  {
+    "timestamp": 1642291210000,
+    "appleId": 2,
+    "position": {
+      "x": -0.8,
+      "y": 1.1,
+      "z": 1.8
+    },
+    "status": "spawned",
+    "type": "rotten"
+  },
+  {
+    "timestamp": 1642291215000,
+    "appleId": 2,
+    "position": {
+      "x": -0.82,
+      "y": 1.08,
+      "z": 1.75
+    },
+    "status": "grabbed",
+    "type": "rotten"
+  },
+  {
+    "timestamp": 1642291218000,
+    "appleId": 2,
+    "position": {
+      "x": -0.85,
+      "y": 1.05,
+      "z": 1.7
+    },
+    "status": "dropped",
+    "type": "rotten"
+  },
+  {
+    "timestamp": 1642291220000,
+    "appleId": 3,
+    "position": {
+      "x": 0.5,
+      "y": 1.5,
+      "z": 2.3
+    },
+    "status": "spawned",
+    "type": "fresh"
+  },
+  {
+    "timestamp": 1642291225000,
+    "appleId": 3,
+    "position": {
+      "x": 0.52,
+      "y": 1.48,
+      "z": 2.25
+    },
+    "status": "grabbed",
+    "type": "fresh"
+  },
+  {
+    "timestamp": 1642291228000,
+    "appleId": 3,
+    "position": {
+      "x": 0.2,
+      "y": 0.8,
+      "z": 1.8
+    },
+    "status": "collected",
+    "type": "fresh"
+  }
+]
