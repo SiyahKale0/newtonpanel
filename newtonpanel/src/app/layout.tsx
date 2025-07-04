@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-// Temporarily disable Google Fonts due to network restrictions
+// If you want to re-enable fonts later:
+// import { Geist, Geist_Mono } from "next/font/google";
+
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
 //   subsets: ["latin"],
@@ -24,9 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`antialiased`}
-      >
+      <body className="antialiased">
         {children}
       </body>
     </html>
