@@ -9,7 +9,7 @@ import { Target, Loader2 } from "lucide-react";
 
 // Gerekli tüm servisler, tipler ve dinleyiciler
 import { getPatientById, incrementPatientSession } from "@/services/patientService";
-import { createNewSession, updateSessionGame } from "@/services/sessionService";
+import { createNewSession, updateSessionGame, updateSession } from "@/services/sessionService";
 import { updateDevice } from "@/services/deviceService";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/services/firebase";
@@ -23,7 +23,7 @@ import { GameSelectionTab } from "./session-creator/tabs/GameSelectionTab";
 import { ObjectPlacementTab } from "./session-creator/tabs/ObjectPlacementTab";
 import { FingerSelection } from "@/components/finger-selection";
 import { PreviewTab } from "./session-creator/tabs/PreviewTab";
-
+import { CalibrationTab } from "./session-creator/tabs/CalibrationTab";
 
 function formatPatientForDashboard(patient: FirebasePatient): DashboardPatient {
     return { id: patient.id, name: patient.name, age: patient.age, diagnosis: patient.diagnosis, arm: patient.isFemale ? "Sol" : "Sağ", romLimit: 60, lastSession: "Mevcut", totalSessions: patient.sessionCount ?? 0, avgScore: 85, improvement: "+10%", status: "active" };
@@ -43,6 +43,9 @@ export function SessionCreator() {
     const [selectedPatient, setSelectedPatient] = useState<DashboardPatient | null>(null);
     const [selectedGame, setSelectedGame] = useState<"apple" | "piano" | null>(null);
     
+    const [minRomCalibre, setMinRomCalibre] = useState(false);
+    const [maxRomCalibre, setMaxRomCalibre] = useState(false);
+    
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
     // Arama, sıralama ve oyun objeleri
@@ -51,7 +54,6 @@ export function SessionCreator() {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "name">("name");
 
-    // Veri dinleyicileri
     useEffect(() => {
         setLoadingData(true);
         const devicesRef = ref(db, 'devices');
@@ -78,45 +80,50 @@ export function SessionCreator() {
             .sort((a, b) => sortOrder === 'asc' ? a.age - b.age : sortOrder === 'desc' ? b.age - a.age : a.name.localeCompare(b.name));
     }, [allPatients, allDevices, searchTerm, sortOrder]);
 
-
-    // OYUN SEÇİMİ İÇİN YENİ FONKSİYON
     const handleGameSelection = async (game: "apple" | "piano") => {
         setSelectedGame(game);
-        if (!currentSessionId) {
-            console.error("Seans ID'si bulunamadı, oyun seçimi kaydedilemedi.");
-            return;
-        }
+        if (!currentSessionId) return;
         try {
-            // HATA ÇÖZÜMÜ: Bileşen içindeki tipi ("apple") veritabanı tipine ("appleGame") dönüştür.
             const gameTypeForDB: 'appleGame' | 'fingerDance' = game === 'apple' ? 'appleGame' : 'fingerDance';
             const gameConfigID = game === 'apple' ? 'gameConfig_1' : 'gameConfig_2';
-            
-            // Servis fonksiyonuna doğru tiple veri gönder.
             await updateSessionGame(currentSessionId, gameTypeForDB, gameConfigID);
-
         } catch (error) {
             console.error("Oyun seçimi güncellenirken hata:", error);
+        }
+    };
+    
+    // ANINDA VERİTABANI GÜNCELLEMESİ YAPAN FONKSİYON
+    const handleCalibrationToggle = async (type: 'min' | 'max') => {
+        if (!currentSessionId) {
+            alert("Kalibrasyon durumunu değiştirmek için önce bir seans oluşturulmalıdır.");
+            return;
+        }
+
+        if (type === 'min') {
+            const newValue = !minRomCalibre;
+            setMinRomCalibre(newValue);
+            await updateSession(currentSessionId, { minRomClibre: newValue });
+        } else {
+            const newValue = !maxRomCalibre;
+            setMaxRomCalibre(newValue);
+            await updateSession(currentSessionId, { maxRomClibre: newValue });
         }
     };
 
     const handleNext = async () => {
         setIsLoading(true);
         try {
-            if (activeTab === "device" && selectedDevice) {
-                setActiveTab("patient");
-            } 
+            if (activeTab === "device" && selectedDevice) setActiveTab("patient");
             else if (activeTab === "patient" && selectedPatient && selectedDevice) {
                 const patientData = await getPatientById(selectedPatient.id);
-                const currentSessionCount = patientData?.sessionCount ?? 0;
-                const newSessionId = `${selectedPatient.id}_session_${currentSessionCount + 1}`; // Daha benzersiz bir ID
+                const newSessionId = `${selectedPatient.id}_session_${(patientData?.sessionCount ?? 0) + 1}`;
                 setCurrentSessionId(newSessionId);
 
                 const sessionData: Omit<FirebaseSession, 'id'> = {
-                    patientID: selectedPatient.id,
-                    deviceID: selectedDevice.id,
+                    patientID: selectedPatient.id, deviceID: selectedDevice.id,
                     date: new Date().toISOString().split('T')[0],
                     startTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-                    endTime: "", romID: ""
+                    endTime: "", romID: "", maxRomClibre: false, minRomClibre: false,
                 };
                 
                 await Promise.all([
@@ -124,15 +131,11 @@ export function SessionCreator() {
                     incrementPatientSession(selectedPatient.id, newSessionId),
                     updateDevice(selectedDevice.id, { patientID: selectedPatient.id })
                 ]);
-
                 setActiveTab("setup");
             } 
-            else if (activeTab === "setup" && selectedGame) {
-                setActiveTab("game-details");
-            } 
-            else if (activeTab === "game-details") {
-                setActiveTab("preview");
-            }
+            else if (activeTab === "setup" && selectedGame) setActiveTab("game-details");
+            else if (activeTab === "game-details") setActiveTab("calibration");
+            else if (activeTab === "calibration") setActiveTab("preview");
         } catch (error) {
             console.error("İleri adıma geçerken hata:", error);
             alert("İşlem sırasında bir hata oluştu.");
@@ -145,37 +148,30 @@ export function SessionCreator() {
         if (activeTab === 'setup' && selectedDevice?.patientID) {
              await updateDevice(selectedDevice.id, { patientID: "" });
         }
-        if (activeTab === "preview") setActiveTab("game-details");
+        if (activeTab === "preview") setActiveTab("calibration");
+        else if (activeTab === "calibration") setActiveTab("game-details");
         else if (activeTab === "game-details") setActiveTab("setup");
         else if (activeTab === "setup") setActiveTab("patient");
         else if (activeTab === "patient") setActiveTab("device");
      }, [activeTab, selectedDevice]);
     
-    // ... (addRandomObject, removeObject fonksiyonları aynı kalır)
-    const addRandomObject = (type: 'fresh' | 'rotten' | 'basket') => { /* ... */ };
-    const removeObject = (id: number, type: 'apple' | 'basket') => { /* ... */ };
-
+    const addRandomObject = (type: 'fresh' | 'rotten' | 'basket') => {};
+    const removeObject = (id: number, type: 'apple' | 'basket') => {};
 
     const renderContent = () => {
-        if (loadingData) {
-            return (<Card className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /><p className="ml-4 text-muted-foreground">Veriler Yükleniyor...</p></Card>);
-        }
+        if (loadingData) return (<Card className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /><p className="ml-4 text-muted-foreground">Veriler Yükleniyor...</p></Card>);
         
         switch(activeTab) {
-            case 'device':
-                return <DeviceSelectionTab devices={allDevices} selectedDevice={selectedDevice} onSelectDevice={setSelectedDevice} />;
-            case 'patient':
-                return <PatientSelectionTab patients={filteredAndSortedPatients} selectedPatient={selectedPatient} onSelectPatient={setSelectedPatient} searchTerm={searchTerm} onSearchTermChange={setSearchTerm} sortOrder={sortOrder} onSortOrderChange={setSortOrder as any} />;
-            case 'setup':
-                return <GameSelectionTab selectedGame={selectedGame} onSelectGame={handleGameSelection} />;
+            case 'device': return <DeviceSelectionTab devices={allDevices} selectedDevice={selectedDevice} onSelectDevice={setSelectedDevice} />;
+            case 'patient': return <PatientSelectionTab patients={filteredAndSortedPatients} selectedPatient={selectedPatient} onSelectPatient={setSelectedPatient} searchTerm={searchTerm} onSearchTermChange={setSearchTerm} sortOrder={sortOrder} onSortOrderChange={setSortOrder as any} />;
+            case 'setup': return <GameSelectionTab selectedGame={selectedGame} onSelectGame={handleGameSelection} />;
             case 'game-details':
                 if (selectedGame === 'apple') return <ObjectPlacementTab apples={apples} baskets={baskets} romLimit={selectedPatient?.romLimit ?? 0} onAddObject={addRandomObject} onRemoveObject={removeObject} />;
                 if (selectedGame === 'piano') return <FingerSelection />;
                 return null;
-            case 'preview':
-                return <PreviewTab selectedPatient={selectedPatient} selectedGame={selectedGame} apples={apples} baskets={baskets} />;
-            default:
-                return null;
+            case 'calibration': return <CalibrationTab minRomCalibre={minRomCalibre} maxRomCalibre={maxRomCalibre} onToggle={handleCalibrationToggle} />;
+            case 'preview': return <PreviewTab selectedPatient={selectedPatient} selectedGame={selectedGame} apples={apples} baskets={baskets} />;
+            default: return null;
         }
     }
 
@@ -194,12 +190,13 @@ export function SessionCreator() {
             </Card>
 
             <Tabs value={activeTab} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="device" onClick={() => setActiveTab('device')}>1. Cihaz</TabsTrigger>
                     <TabsTrigger value="patient" disabled={!selectedDevice} onClick={() => setActiveTab('patient')}>2. Hasta</TabsTrigger>
                     <TabsTrigger value="setup" disabled={!selectedDevice || !selectedPatient} onClick={() => setActiveTab('setup')}>3. Oyun</TabsTrigger>
                     <TabsTrigger value="game-details" disabled={!selectedDevice || !selectedPatient || !selectedGame} onClick={() => setActiveTab('game-details')}>4. Oyun Detay</TabsTrigger>
-                    <TabsTrigger value="preview" disabled={!selectedDevice || !selectedPatient || !selectedGame} onClick={() => setActiveTab('preview')}>5. Önizleme</TabsTrigger>
+                    <TabsTrigger value="calibration" disabled={!selectedDevice || !selectedPatient || !selectedGame} onClick={() => setActiveTab('calibration')}>5. Kalibrasyon</TabsTrigger>
+                    <TabsTrigger value="preview" disabled={!selectedDevice || !selectedPatient || !selectedGame} onClick={() => setActiveTab('preview')}>6. Önizleme</TabsTrigger>
                 </TabsList>
                 <div className="animate-in fade-in-20 transition-opacity duration-300">{renderContent()}</div>
             </Tabs>

@@ -33,6 +33,9 @@ export interface Session {
     gameType?: 'appleGame' | 'fingerDance';
     gameConfigID?: string;
     gameResultID?: string;
+    // YENİ EKLENEN/GÜNCELLENEN ALANLAR
+    maxRomClibre: boolean;
+    minRomClibre: boolean;
 }
 
 export interface Device {
