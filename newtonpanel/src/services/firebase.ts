@@ -29,3 +29,17 @@ const db = getDatabase(app);
 // Başlatılan uygulama (app) ve veritabanı (db) nesnelerini
 // projenin diğer kısımlarında kullanabilmek için dışa aktar.
 export { app, db };
+
+export interface Rom {
+  id?: string; // Firebase ID'si, opsiyonel bırakabilirsin
+  arm: {
+    leftSpace: number;
+    rightSpace: number;
+  };
+  fingers: {
+    [key: string]: {
+      min: string;
+      max: string;
+    };
+  };
+}

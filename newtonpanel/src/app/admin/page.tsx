@@ -16,12 +16,19 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Settings, UserPlus, MonitorSmartphone, Target, LogOut, Users } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Settings, UserPlus, MonitorSmartphone, Target, LogOut, Users, Loader2 } from "lucide-react"
+import { DoctorCard, Doctor } from "@/components/doctor-management/DoctorCard"
+import { createPatient } from "@/services/patientService"
 
 const menuItems = [
   { title: "Doktor Ekle", icon: UserPlus, id: "add-doctor" },
+  { title: "Hasta Ekle", icon: Users, id: "add-patient" },
   { title: "Cihaz Ekle", icon: MonitorSmartphone, id: "add-device" },
-  { title: "Doktor Listele", icon: Users, id: "list-doctors" }, // ✅ yeni eklendi
+  { title: "Doktor Listele", icon: Users, id: "list-doctors" },
   { title: "Ayarlar", icon: Settings, id: "settings" },
 ]
 
@@ -44,65 +51,133 @@ export default function AdminDashboard() {
         <CardContent>
           <form className="space-y-4">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                İsim
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                id="firstName"
-                placeholder="Dr. Ayşe"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              />
+              <label htmlFor="doctorName" className="block text-sm font-medium text-gray-700">Doktor Adı</label>
+              <Input id="doctorName" placeholder="Dr. Ayşe Kaya" />
             </div>
 
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                Soyisim
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                id="lastName"
-                placeholder="Kaya"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              />
+              <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">Uzmanlık Alanı</label>
+              <Input id="specialization" placeholder="Fizyoterapi" />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                E-posta
-              </label>
-              <input
-                type="email"
-                name="email"
-                id="email"
-                placeholder="ayse.kaya@example.com"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">
-                Uzmanlık Alanı
-              </label>
-              <input
-                type="text"
-                name="specialization"
-                id="specialization"
-                placeholder="Fizyoterapi"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              />
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">E-posta</label>
+              <Input id="email" type="email" placeholder="ayse.kaya@example.com" />
             </div>
 
             <div className="pt-4">
-              <button
-                type="submit"
-                className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Doktor Ekle
-              </button>
+              <Button type="submit" className="w-full">Doktor Ekle</Button>
             </div>
+          </form>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  function PatientAdder() {
+    const [name, setName] = useState("")
+    const [age, setAge] = useState("")
+    const [diagnosis, setDiagnosis] = useState("")
+    const [gender, setGender] = useState<"male" | "female" | "">("")
+    const [notes, setNotes] = useState("")
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const resetForm = () => {
+      setName("")
+      setAge("")
+      setDiagnosis("")
+      setGender("")
+      setNotes("")
+      setIsSubmitting(false)
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      setIsSubmitting(true)
+
+      if (!name || !age || !diagnosis || !gender) {
+        alert("Lütfen tüm zorunlu alanları doldurun.")
+        setIsSubmitting(false)
+        return
+      }
+
+      try {
+        const newPatientData = {
+          name,
+          age: parseInt(age, 10),
+          diagnosis,
+          isFemale: gender === "female",
+          note: notes,
+          customGames: { appleGame: "", fingerDance: "" },
+          devices: [],
+          romID: "",
+          sessionCount: 0,
+          sessions: {},
+        }
+
+        await createPatient(newPatientData)
+        alert("Hasta başarıyla kaydedildi!")
+        resetForm()
+      } catch (error) {
+        console.error("Hasta kaydedilirken hata oluştu:", error)
+        alert("Hasta kaydedilirken bir hata oluştu. Lütfen konsolu kontrol edin.")
+        setIsSubmitting(false)
+      }
+    }
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Hasta Ekle</CardTitle>
+          <CardDescription>Yeni hasta kaydı oluşturun</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Ad Soyad</Label>
+              <Input id="name" placeholder="Hastanın tam adı" value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="age">Yaş</Label>
+                <Input id="age" type="number" placeholder="Örn: 45" value={age} onChange={(e) => setAge(e.target.value)} required />
+              </div>
+
+              <div>
+                <Label htmlFor="gender">Cinsiyet</Label>
+                <Select value={gender} onValueChange={(value: "male" | "female" | "") => setGender(value)} required>
+                  <SelectTrigger id="gender">
+                    <SelectValue placeholder="Cinsiyet seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="female">Kadın</SelectItem>
+                    <SelectItem value="male">Erkek</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="diagnosis">Teşhis</Label>
+              <Input id="diagnosis" placeholder="Teşhis bilgisi" value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} required />
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Notlar</Label>
+              <Textarea id="notes" placeholder="Hasta hakkında ek notlar..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Kaydediliyor...
+                </>
+              ) : (
+                "Hastayı Kaydet"
+              )}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -119,38 +194,17 @@ export default function AdminDashboard() {
         <CardContent>
           <form className="space-y-4">
             <div>
-              <label htmlFor="deviceName" className="block text-sm font-medium text-gray-700">
-                Cihaz Adı
-              </label>
-              <input
-                type="text"
-                name="deviceName"
-                id="deviceName"
-                placeholder="XR-1000"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-              />
+              <label htmlFor="deviceName" className="block text-sm font-medium text-gray-700">Cihaz Adı</label>
+              <Input id="deviceName" placeholder="XR-1000" />
             </div>
 
             <div>
-              <label htmlFor="deviceId" className="block text-sm font-medium text-gray-700">
-                Cihaz ID’si
-              </label>
-              <input
-                type="text"
-                name="deviceId"
-                id="deviceId"
-                placeholder="ABC12345"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-              />
+              <label htmlFor="deviceId" className="block text-sm font-medium text-gray-700">Cihaz ID</label>
+              <Input id="deviceId" placeholder="ABC12345" />
             </div>
 
             <div className="pt-4">
-              <button
-                type="submit"
-                className="inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-              >
-                Cihaz Ekle
-              </button>
+              <Button type="submit" className="w-full">Cihaz Ekle</Button>
             </div>
           </form>
         </CardContent>
@@ -159,20 +213,22 @@ export default function AdminDashboard() {
   }
 
   function DoctorList() {
+    const doctors: Doctor[] = [
+      {
+        id: "1",
+        name: "Dr. Ayşe Kaya",
+        specialization: "Fizyoterapi",
+        email: "ayse.kaya@example.com",
+        status: "active",
+      },
+    ]
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Doktor Listesi</CardTitle>
-          <CardDescription>Sistemde kayıtlı tüm doktorlar</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
-            <li className="border p-2 rounded">Dr. Ayşe Kaya - Fizyoterapi</li>
-            <li className="border p-2 rounded">Dr. Mehmet Yılmaz - Ortopedi</li>
-            <li className="border p-2 rounded">Dr. Zeynep Demir - Nöroloji</li>
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {doctors.map((doctor) => (
+          <DoctorCard key={doctor.id} doctor={doctor} />
+        ))}
+      </div>
     )
   }
 
@@ -186,51 +242,22 @@ export default function AdminDashboard() {
         <CardContent>
           <form className="space-y-4 max-w-md">
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                Mevcut Şifre
-              </label>
-              <input
-                type="password"
-                name="currentPassword"
-                id="currentPassword"
-                placeholder="********"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-              />
+              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Mevcut Şifre</label>
+              <Input id="currentPassword" type="password" placeholder="********" />
             </div>
 
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                Yeni Şifre
-              </label>
-              <input
-                type="password"
-                name="newPassword"
-                id="newPassword"
-                placeholder="Yeni şifrenizi girin"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-              />
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">Yeni Şifre</label>
+              <Input id="newPassword" type="password" placeholder="Yeni şifrenizi girin" />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Yeni Şifre (Tekrar)
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                id="confirmPassword"
-                placeholder="Yeni şifreyi tekrar girin"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-              />
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Yeni Şifre (Tekrar)</label>
+              <Input id="confirmPassword" type="password" placeholder="Yeni şifreyi tekrar girin" />
             </div>
 
             <div className="pt-4">
-              <button
-                type="submit"
-                className="inline-flex justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-              >
-                Şifreyi Güncelle
-              </button>
+              <Button type="submit" className="w-full">Şifreyi Güncelle</Button>
             </div>
           </form>
         </CardContent>
@@ -302,6 +329,7 @@ export default function AdminDashboard() {
 
           <main className="p-6">
             {activeTab === "add-doctor" && <DoctorAdder />}
+            {activeTab === "add-patient" && <PatientAdder />}
             {activeTab === "add-device" && <DeviceAdder />}
             {activeTab === "list-doctors" && <DoctorList />}
             {activeTab === "settings" && <SettingsPanel />}

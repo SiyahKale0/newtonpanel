@@ -1,16 +1,20 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Eye, Edit, AtSign, Hash } from "lucide-react";
+import { User, Eye, Edit, AtSign } from "lucide-react";
+
+export interface Doctor {
+  id: string;
+  name: string;
+  specialization: string;
+  email: string;
+  status: "active" | "inactive";
+}
 
 interface DoctorCardProps {
-  doctor: {
-    id: string;
-    name: string;
-    specialization: string;
-    email: string;
-    status: "active" | "inactive";
-  };
+  doctor: Doctor;
 }
 
 export function DoctorCard({ doctor }: DoctorCardProps) {
@@ -35,14 +39,10 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-sm border-t pt-4">
+          <div className="grid grid-cols-1 gap-4 text-sm border-t pt-4">
             <div>
               <span className="text-muted-foreground">Email:</span>
               <span className="ml-2 font-medium flex items-center"><AtSign className="w-4 h-4 mr-1" />{doctor.email}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">ID:</span>
-              <span className="ml-2 font-medium flex items-center"><Hash className="w-4 h-4 mr-1" />{doctor.id}</span>
             </div>
           </div>
 
