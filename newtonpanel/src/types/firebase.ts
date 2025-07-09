@@ -19,6 +19,7 @@ export interface Patient {
     romID: string;              // Hastanın ROM (hareket aralığı) profili ID'si
     sessionCount: number;       // Hastanın toplam seans sayısı
     sessions?: { [sessionId: string]: boolean }; // Hastanın katıldığı tüm seansların ID'leri
+    rom?: Rom;
 }
 
 export interface Session {
@@ -33,6 +34,9 @@ export interface Session {
     gameType?: 'appleGame' | 'fingerDance';
     gameConfigID?: string;
     gameResultID?: string;
+    // YENİ EKLENEN/GÜNCELLENEN ALANLAR
+    maxRomClibre: boolean;
+    minRomClibre: boolean;
 }
 
 export interface Device {
