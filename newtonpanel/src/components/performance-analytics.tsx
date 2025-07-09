@@ -1,178 +1,123 @@
+// src/components/performance-analytics.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { getPatientById, getAllPatients } from "@/services/patientService";
-import { getRomById } from "@/services/romService";
-import { getAllSessionsByPatientId_ClientFiltered } from "@/services/sessionService"; 
-import ArmMeasurementCard from "@/components/performance-analytics/ArmMeasurementCard";
-import FingerProgressTable from "@/components/performance-analytics/FingerProgressTable";
-import { Patient, Rom, Session } from "@/types/firebase";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CalendarClock } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { getDatabase, ref, get } from 'firebase/database';
+import { Patient, Session, Rom } from '@/types/firebase';
+import PatientSelector from './performance-analytics/PatientSelector';
+import SessionSelector from './performance-analytics/SessionSelector';
+import ArmMeasurementCard from './performance-analytics/ArmMeasurementCard';
+import FingerProgressTable from './performance-analytics/FingerProgressTable';
 
-// --- YARDIMCI BİLEŞENLER ---
-const LoadingIndicator = () => (
-    <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="ml-4 text-gray-600">Veriler yükleniyor...</p>
-    </div>
-);
+export default function PerformanceAnalytics() {
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [roms, setRoms] = useState<Rom[]>([]);
 
-const ErrorCard = ({ message }: { message: string }) => (
-    <Card className="m-4 bg-destructive text-destructive-foreground">
-        <CardHeader><CardTitle>Bir Hata Oluştu</CardTitle></CardHeader>
-        <CardContent><p>{message}</p></CardContent>
-    </Card>
-);
-
-// --- ANA BİLEŞEN ---
-interface PerformanceAnalyticsProps {
-  selectedPatientId: string | null;
-}
-
-export default function PerformanceAnalytics({ selectedPatientId }: PerformanceAnalyticsProps) {
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [allPatients, setAllPatients] = useState<Patient[]>([]);
-  const [patientSessions, setPatientSessions] = useState<Session[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedRom, setSelectedRom] = useState<Rom | null>(null);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentPatientId, setCurrentPatientId] = useState<string | null>(selectedPatientId);
 
-  // 1. Başlangıçta tüm hastaları yükle
   useEffect(() => {
-    const fetchAllPatients = async () => {
+    const db = getDatabase();
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const patients = await getAllPatients();
-        setAllPatients(patients);
+        const patientsSnapshot = await get(ref(db, 'patients'));
+        const sessionsSnapshot = await get(ref(db, 'sessions'));
+        const romsSnapshot = await get(ref(db, 'roms'));
+
+        if (patientsSnapshot.exists()) {
+          const patientsData = patientsSnapshot.val();
+          setPatients(Object.keys(patientsData).map(key => ({ id: key, ...patientsData[key] })));
+        }
+        if (sessionsSnapshot.exists()) {
+          const sessionsData = sessionsSnapshot.val();
+          setSessions(Object.keys(sessionsData).map(key => ({ id: key, ...sessionsData[key] })));
+        }
+        if (romsSnapshot.exists()) {
+          const romsData = romsSnapshot.val();
+          setRoms(Object.keys(romsData).map(key => ({ id: key, ...romsData[key] })));
+        }
       } catch (err) {
-        setError("Hasta listesi yüklenirken bir sorun oluştu.");
+        setError('Veriler yüklenirken bir hata oluştu.');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchAllPatients();
+    fetchData();
   }, []);
-  
-  // Props'tan gelen ID değişirse state'i güncelle
-  useEffect(() => {
-    setCurrentPatientId(selectedPatientId);
-  }, [selectedPatientId]);
 
-  // 2. Hasta ID'si değiştiğinde, o hastaya ait detayları ve seansları çek
-  useEffect(() => {
-    if (!currentPatientId) {
-      setPatient(null);
-      setPatientSessions([]);
-      setSelectedRom(null);
-      return;
-    }
-    
-    const fetchPatientDetails = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [patientData, sessionsData] = await Promise.all([
-          getPatientById(currentPatientId),
-          getAllSessionsByPatientId_ClientFiltered(currentPatientId)
-        ]);
-        
-        if (!patientData) throw new Error("Hasta bulunamadı.");
+  const handlePatientChange = (patientId: string) => {
+    const patient = patients.find(p => p.id === patientId) || null;
+    setSelectedPatient(patient);
+    setSelectedSession(null); // Hasta değiştiğinde seans seçimini sıfırla
+    setSelectedRom(null); // Hasta değiştiğinde ROM seçimini sıfırla
+  };
 
-        const sortedSessions = sessionsData.sort((a, b) => 
-            new Date(b.date + 'T' + b.startTime).getTime() - new Date(a.date + 'T' + a.startTime).getTime()
-        );
+  const handleSessionChange = (sessionId: string) => {
+    setLoading(true);
+    const session = sessions.find(s => s.id === sessionId) || null;
+    setSelectedSession(session);
 
-        setPatient(patientData);
-        setPatientSessions(sortedSessions);
-        setSelectedRom(null);
-
-      } catch (err: any) {
-        setError(err.message || "Veriler yüklenirken bir hata oluştu.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPatientDetails();
-  }, [currentPatientId]);
-
-  // 3. Bir seans seçildiğinde, o seansa ait ROM verisini çek
-  const handleSessionChange = async (sessionId: string) => {
-    const selectedSession = patientSessions.find(s => s.id === sessionId);
-    if (selectedSession && selectedSession.romID) {
-      setLoading(true);
-      try {
-        const romData = await getRomById(selectedSession.romID);
-        setSelectedRom(romData);
-      } catch (error) {
-        setError("ROM verisi alınırken hata oluştu.");
-        setSelectedRom(null);
-      } finally {
-        setLoading(false);
-      }
+    if (session && session.romID) {
+      const rom = roms.find(r => r.id === session.romID) || null;
+      setSelectedRom(rom);
     } else {
       setSelectedRom(null);
     }
+    setLoading(false);
   };
   
-  // Hata varsa göster
-  if (error) {
-    return <ErrorCard message={error} />;
-  }
+  const patientSessions = selectedPatient ? sessions.filter(s => s.patientID === selectedPatient.id) : [];
 
-  // --- RENDER KISMI ---
   return (
-    <div className="space-y-6 p-6">
-      {/* HASTA SEÇİMİ KARTI (Her zaman görünür, seçili hasta varsa ismi yazar) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Users /> Hasta Seçimi</CardTitle>
-          <CardDescription>
-            {currentPatientId && patient ? `Seçili Hasta: ${patient.name}` : "Analiz yapmak için bir hasta seçin."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={currentPatientId ?? ""} onValueChange={setCurrentPatientId}>
-            <SelectTrigger className="w-full max-w-sm">
-              <SelectValue placeholder="Hasta seçin..." />
-            </SelectTrigger>
-            <SelectContent>
-              {allPatients.length > 0 ? (
-                allPatients.map(p => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))
-              ) : <SelectItem value="loading" disabled>Yükleniyor...</SelectItem>}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold mb-4">Performans Analizi</h1>
+      
+      {error && <p className="text-red-500">{error}</p>}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <PatientSelector patients={patients} onSelect={handlePatientChange} />
+        {selectedPatient && (
+          <SessionSelector sessions={patientSessions} onSelect={handleSessionChange} />
+        )}
+      </div>
 
-      {/* Yükleniyorsa animasyon göster */}
-      {loading && <LoadingIndicator />}
+      {loading && <p>Yükleniyor...</p>}
 
-      {/* Bir hasta seçilmişse ve yükleme bittiyse, SEANS SEÇİMİ KARTINI göster */}
-      {currentPatientId && !loading && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><CalendarClock /> Seans Seçimi</CardTitle>
-            <CardDescription>Analiz etmek istediğiniz seansı seçin. Seanslar en yeni tarihten eskiye doğru sıralanmıştır.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {patientSessions.length > 0 ? (
-              <Select onValueChange={handleSessionChange}>
-                <SelectTrigger className="w-full max-w-md"><SelectValue placeholder="Bir seans seçin..." /></SelectTrigger>
-                <SelectContent>{patientSessions.map(session => (<SelectItem key={session.id} value={session.id} disabled={!session.romID}>{session.date} {session.startTime} - (Oyun: {session.gameType}) {!session.romID && " - ROM verisi yok"}</SelectItem>))}</SelectContent>
-              </Select>
-            ) : <p className="text-sm text-gray-500">Bu hasta için kayıtlı seans bulunamadı.</p>}
-          </CardContent>
-        </Card>
+      {selectedSession && !selectedRom && !loading && (
+        <p className="text-center text-gray-500 mt-8">Bu seans için ROM verisi bulunamadı.</p>
       )}
 
       {/* Bir seans ve ROM verisi seçilmişse, SONUÇLARI göster */}
       {selectedRom && !loading && (
-        <>
+        <div className="space-y-6">
           {selectedRom.arm && <ArmMeasurementCard leftSpace={selectedRom.arm.leftSpace} rightSpace={selectedRom.arm.rightSpace} />}
+          
           {selectedRom.finger && (
-            <FingerProgressTable fingers={[...selectedRom.finger.leftFingers.map((f, i) => ({ name: `Sol Parmak ${i + 1}`, min: f.min.toString(), max: f.max.toString() })), ...selectedRom.finger.rightFingers.map((f, i) => ({ name: `Sağ Parmak ${i + 1}`, min: f.min.toString(), max: f.max.toString() }))]}/>
+            <FingerProgressTable fingers={
+              // Gelen 'finger' verisinin dizi olup olmadığını kontrol et
+              Array.isArray(selectedRom.finger)
+                // Eğer dizi ise, her bir parmağı isimlendirerek yeni bir dizi oluştur
+                ? selectedRom.finger.map((f, i) => ({ 
+                    name: `Parmak ${i + 1}`, 
+                    // Değerler 0-1 arasındaysa 100 ile çarp, değilse doğrudan kullan
+                    min: (Number(f.min) < 2 ? (Number(f.min) * 100).toFixed(0) : Number(f.min).toString()),
+                    max: (Number(f.max) < 2 ? (Number(f.max) * 100).toFixed(0) : Number(f.max).toString())
+                  }))
+                // Eğer dizi değilse (eski yapıdaysa), 'leftFingers' ve 'rightFingers' dizilerini birleştir
+                : [
+                    ...(selectedRom.finger.leftFingers || []).map((f, i) => ({ name: `Sol Parmak ${i + 1}`, min: f.min.toString(), max: f.max.toString() })),
+                    ...(selectedRom.finger.rightFingers || []).map((f, i) => ({ name: `Sağ Parmak ${i + 1}`, min: f.min.toString(), max: f.max.toString() }))
+                  ]
+            }/>
           )}
-        </>
+        </div>
       )}
     </div>
   );
