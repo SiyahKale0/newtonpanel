@@ -312,7 +312,7 @@ export function SessionCreator() {
                     minRomCalibre={minRomCalibre}
                     maxRomCalibre={maxRomCalibre}
                     onToggle={handleCalibrationToggle}
-                    currentSessionId={currentSessionId}
+
                 />;
             // ===================================================================
             //                        ↑↑↑ DEĞİŞİKLİK BURADA ↑↑↑
