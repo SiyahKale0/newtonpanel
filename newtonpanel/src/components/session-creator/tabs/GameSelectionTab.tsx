@@ -4,13 +4,15 @@ import { Piano, HandMetal } from "lucide-react";
 
 interface GameSelectionTabProps {
     selectedGame: "apple" | "piano" | null;
-    // Değişiklik: Sadece onSelectGame'i kullanacağız
     onSelectGame: (game: "apple" | "piano") => void;
 }
 
 export function GameSelectionTab({ selectedGame, onSelectGame }: GameSelectionTabProps) {
-    // Oyun seçimi direkt olarak parent component'teki onSelectGame'i çağırır.
-    // Bu fonksiyon artık veritabanı güncellemesini de tetikleyecek.
+    const gameTypeMap = {
+        apple: "apple",
+        piano: "fingerDance"
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -27,7 +29,7 @@ export function GameSelectionTab({ selectedGame, onSelectGame }: GameSelectionTa
                     >
                         <HandMetal className="h-12 w-12 text-red-500" />
                         <h3 className="text-lg font-semibold">Elma Toplama Oyunu</h3>
-                        <p className="text-sm text-muted-foreground">ID: gameConfig_1</p>
+                        <p className="text-sm text-muted-foreground">Oyun Tipi: {gameTypeMap.apple}</p>
                     </div>
                     <div
                         onClick={() => onSelectGame("piano")}
@@ -37,7 +39,7 @@ export function GameSelectionTab({ selectedGame, onSelectGame }: GameSelectionTa
                     >
                         <Piano className="h-12 w-12 text-blue-500" />
                         <h3 className="text-lg font-semibold">Piyano Oyunu</h3>
-                        <p className="text-sm text-muted-foreground">ID: gameConfig_2</p>
+                        <p className="text-sm text-muted-foreground">Oyun Tipi: {gameTypeMap.piano}</p>
                     </div>
                 </div>
             </CardContent>

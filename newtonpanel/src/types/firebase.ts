@@ -31,7 +31,7 @@ export interface Session {
     endTime: string;            // Seansın bitiş zamanı (başlangıçta boş olabilir)
     romID: string;              // Seans sırasında kullanılan ROM profili ID'si
     // Bu alanlar, seans akışı sırasında doldurulur.
-    gameType?: 'appleGame' | 'fingerDance';
+    gameType?: 'appleGame' | 'fingerDance' | 'operaScene';
     gameConfigID?: string;
     gameResultID?: string;
     // YENİ EKLENEN/GÜNCELLENEN ALANLAR
@@ -60,6 +60,7 @@ export interface AppleGameConfig extends BaseGameConfig {
     difficulty: 'easy' | 'medium' | 'hard';
     duration: number;           // Saniye cinsinden
     maxApples: number;
+    handPerHundred: number;
 }
 
 export interface FingerDanceConfig extends BaseGameConfig {
@@ -67,6 +68,7 @@ export interface FingerDanceConfig extends BaseGameConfig {
     song: string;
     speed: number;
     targetFingers: number[];
+    handPerHundred: number;
 }
 
 export type GameConfig = AppleGameConfig | FingerDanceConfig;
