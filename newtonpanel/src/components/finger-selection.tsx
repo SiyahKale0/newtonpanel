@@ -16,17 +16,22 @@ const ALL_FINGER_NAMES = [
 
 const FINGER_ORDER = ["Başparmak", "İşaret Parmağı", "Orta Parmak", "Yüzük Parmağı", "Serçe Parmağı"];
 
-export function FingerSelection() {
-    const [selectedFingers, setSelectedFingers] = React.useState<string[]>([]);
+interface FingerSelectionProps {
+    selectedFingers: string[];
+    onSelectionChange: (selected: string[]) => void;
+}
+
+export function FingerSelection({ selectedFingers, onSelectionChange }: FingerSelectionProps) {
 
     const toggleFinger = React.useCallback((fingerName: string) => {
-        setSelectedFingers((prev) =>
-            prev.includes(fingerName) ? prev.filter((name) => name !== fingerName) : [...prev, fingerName]
-        );
-    }, []);
+        const newSelection = selectedFingers.includes(fingerName)
+            ? selectedFingers.filter((name) => name !== fingerName)
+            : [...selectedFingers, fingerName];
+        onSelectionChange(newSelection);
+    }, [selectedFingers, onSelectionChange]);
 
-    const selectAll = () => setSelectedFingers(ALL_FINGER_NAMES);
-    const deselectAll = () => setSelectedFingers([]);
+    const selectAll = () => onSelectionChange(ALL_FINGER_NAMES);
+    const deselectAll = () => onSelectionChange([]);
 
     const sortedSelectedFingers = React.useMemo(() => {
         return [...selectedFingers].sort((a, b) => {
