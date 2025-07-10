@@ -1,56 +1,95 @@
 // src/components/session-creator/tabs/CalibrationTab.tsx
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ToggleLeft, ToggleRight } from "lucide-react";
+"use client"
 
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+
+// Hatanın çözümü için arayüzü güncelliyoruz
 interface CalibrationTabProps {
     minRomCalibre: boolean;
     maxRomCalibre: boolean;
-    onToggle: (type: 'min' | 'max') => void;
+    onToggle: (type: 'min' | 'max') => Promise<void>;
+    // ↓↓↓ DEĞİŞİKLİK BURADA: 'string' yerine 'string | null' tipini kabul et
+    currentSessionId: string | null;
 }
 
-export function CalibrationTab({ minRomCalibre, maxRomCalibre, onToggle }: CalibrationTabProps) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>ROM Kalibrasyonu</CardTitle>
-                <CardDescription>Hastanın minimum ve maksimum hareket aralığı (ROM) için kalibrasyonu başlatın veya durdurun.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                        <h4 className="font-semibold">Minimum ROM Kalibrasyonu</h4>
-                        <p className="text-sm text-muted-foreground">Hastanın uzanabildiği en yakın mesafe için kalibrasyonu aç/kapa.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Button
-                            onClick={() => onToggle('min')}
-                            variant={minRomCalibre ? "default" : "outline"}
-                            className="w-40"
-                        >
-                            {minRomCalibre ? <ToggleRight className="w-5 h-5 mr-2" /> : <ToggleLeft className="w-5 h-5 mr-2" />}
-                            {minRomCalibre ? 'Aktif' : 'Pasif'}
-                        </Button>
-                    </div>
-                </div>
+export function CalibrationTab({ minRomCalibre, maxRomCalibre, onToggle, currentSessionId }: CalibrationTabProps) {
+    const [isMinLoading, setIsMinLoading] = useState(false);
+    const [isMaxLoading, setIsMaxLoading] = useState(false);
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                        <h4 className="font-semibold">Maksimum ROM Kalibrasyonu</h4>
-                        <p className="text-sm text-muted-foreground">Hastanın uzanabildiği en uzak mesafe için kalibrasyonu aç/kapa.</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Button
-                            onClick={() => onToggle('max')}
-                            variant={maxRomCalibre ? "default" : "outline"}
-                            className="w-40"
-                        >
-                            {maxRomCalibre ? <ToggleRight className="w-5 h-5 mr-2" /> : <ToggleLeft className="w-5 h-5 mr-2" />}
-                            {maxRomCalibre ? 'Aktif' : 'Pasif'}
-                        </Button>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+    const handleToggle = async (type: 'min' | 'max') => {
+        // currentSessionId'nin null olup olmadığını kontrol ediyoruz,
+        // bu sayede uygulama kırılmaz.
+        if (!currentSessionId) {
+            console.warn("Kalibrasyon işlemi için seans ID'si bekleniyor.");
+            return;
+        }
+
+        if (type === 'min') {
+            setIsMinLoading(true);
+            await onToggle('min');
+            setIsMinLoading(false);
+        } else {
+            setIsMaxLoading(true);
+            await onToggle('max');
+            setIsMaxLoading(false);
+        }
+    };
+
+    // Butonların 'disabled' durumu, currentSessionId'nin varlığını kontrol eder.
+    const isButtonDisabled = !currentSessionId;
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Minimum ROM Kalibrasyon Kartı */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Minimum ROM Kalibrasyonu</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-start gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        Lütfen elinizi en kapalı (yumruk) pozisyona getirin ve butona tıklayarak kalibrasyonu başlatın.
+                    </p>
+                    <Button
+                        onClick={() => handleToggle('min')}
+                        variant={minRomCalibre ? "secondary" : "default"}
+                        className="w-full"
+                        disabled={isMinLoading || isButtonDisabled}
+                    >
+                        {isMinLoading ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Güncelleniyor...</>
+                        ) : (
+                            minRomCalibre ? 'Kalibrasyon Aktif' : 'Pasif'
+                        )}
+                    </Button>
+                </CardContent>
+            </Card>
+
+            {/* Maksimum ROM Kalibrasyon Kartı */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Maksimum ROM Kalibrasyonu</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-start gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        Lütfen elinizi en açık pozisyona getirin ve butona tıklayarak kalibrasyonu başlatın.
+                    </p>
+                    <Button
+                        onClick={() => handleToggle('max')}
+                        variant={maxRomCalibre ? "secondary" : "default"}
+                        className="w-full"
+                        disabled={isMaxLoading || isButtonDisabled}
+                    >
+                        {isMaxLoading ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Güncelleniyor...</>
+                        ) : (
+                            maxRomCalibre ? 'Kalibrasyon Aktif' : 'Pasif'
+                        )}
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
     );
 }
