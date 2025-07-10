@@ -102,12 +102,20 @@ export function SessionCreator() {
                 setActiveTab("patient");
             } else if (activeTab === "patient" && selectedPatient && selectedDevice) {
                 const patientData = await getPatientById(selectedPatient.id);
-                const newSessionId = `${selectedPatient.id}_session_${(patientData?.sessionCount ?? 0) + 1}`;
+                // Seans sayısını alıyoruz (yeni seans olacağı için +1)
+                const sessionCount = (patientData?.sessionCount ?? 0) + 1;
+                const newSessionId = `${selectedPatient.id}_session_${sessionCount}`;
+                
+                // İsteğiniz doğrultusunda yeni romID formatını oluşturuyoruz
+                const newRomId = `${selectedPatient.id}_rom_${sessionCount}`; 
+                
                 setCurrentSessionId(newSessionId);
                 const sessionData: Omit<FirebaseSession, 'id'> = {
                     patientID: selectedPatient.id, deviceID: selectedDevice.id, date: new Date().toISOString().split('T')[0],
                     startTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-                    endTime: "", romID: "", maxRomClibre: false, minRomClibre: false,
+                    endTime: "", 
+                    romID: newRomId, // Yeni romID'yi seans verisine ekliyoruz
+                    maxRomClibre: false, minRomClibre: false,
                 };
                 await Promise.all([
                     createNewSession(newSessionId, sessionData),
