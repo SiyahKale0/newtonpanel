@@ -5,14 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/EditPatientDialog.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/PatientDetailModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/app/panel/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/app/panel/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/patient-management.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/PatientCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/patient-management/PatientCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PerformanceFilter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/performance-analytics/PerformanceFilter.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/CalibrationTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/CalibrationTab.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/GameSelectionTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/GameSelectionTab.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PreviewTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PreviewTab.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/types/firebase.ts" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/types/firebase.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,7 +100,12 @@
       <workItem from="1751353944120" duration="4626000" />
       <workItem from="1751367568250" duration="7719000" />
       <workItem from="1751439453070" duration="3137000" />
-      <workItem from="1751526673375" duration="5086000" />
+      <workItem from="1751526673375" duration="9260000" />
+      <workItem from="1751614031360" duration="7098000" />
+      <workItem from="1751840406428" duration="15000" />
+      <workItem from="1751885878553" duration="1268000" />
+      <workItem from="1752048968327" duration="8544000" />
+      <workItem from="1752137427437" duration="5707000" />
     </task>
     <servers />
   </component>
