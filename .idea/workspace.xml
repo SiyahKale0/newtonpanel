@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/CalibrationTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/CalibrationTab.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/GameSelectionTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/GameSelectionTab.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PreviewTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/PreviewTab.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/types/firebase.ts" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/types/firebase.ts" afterDir="false" />
-    </list>
+    <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -40,22 +33,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;#3 on mirhan&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/mirxan/Documents/GitHub/newtonpanel/newtonpanel/src/components/ui&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.1.4\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "mirhan",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/mirxan/Documents/GitHub/newtonpanel/newtonpanel/src/components/ui",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "show.migrate.to.gradle.popup": "false",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2024.1.4\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\mirxan\Documents\GitHub\newtonpanel\newtonpanel\src\components\ui" />
@@ -106,6 +99,7 @@
       <workItem from="1751885878553" duration="1268000" />
       <workItem from="1752048968327" duration="8544000" />
       <workItem from="1752137427437" duration="5707000" />
+      <workItem from="1752436706182" duration="651000" />
     </task>
     <servers />
   </component>

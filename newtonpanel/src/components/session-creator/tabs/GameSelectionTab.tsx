@@ -3,16 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Piano, HandMetal } from "lucide-react";
 
 interface GameSelectionTabProps {
-    selectedGame: "apple" | "piano" | null;
-    onSelectGame: (game: "apple" | "piano") => void;
+    selectedGame: "appleGame" | "fingerDance" | null;
+    onSelectGame: (game: "appleGame" | "fingerDance") => void;
 }
 
 export function GameSelectionTab({ selectedGame, onSelectGame }: GameSelectionTabProps) {
-    const gameTypeMap = {
-        apple: "apple",
-        piano: "fingerDance"
-    };
-
     return (
         <Card>
             <CardHeader>
@@ -22,24 +17,24 @@ export function GameSelectionTab({ selectedGame, onSelectGame }: GameSelectionTa
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div
-                        onClick={() => onSelectGame("apple")}
+                        onClick={() => onSelectGame("appleGame")}
                         className={`flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border p-8 transition-all ${
-                            selectedGame === "apple" ? "border-primary ring-2 ring-primary" : "hover:border-primary/50"
+                            selectedGame === "appleGame" ? "border-primary ring-2 ring-primary" : "hover:border-primary/50"
                         }`}
                     >
                         <HandMetal className="h-12 w-12 text-red-500" />
                         <h3 className="text-lg font-semibold">Elma Toplama Oyunu</h3>
-                        <p className="text-sm text-muted-foreground">Oyun Tipi: {gameTypeMap.apple}</p>
+                        <p className="text-sm text-muted-foreground">Oyun Tipi: appleGame</p>
                     </div>
                     <div
-                        onClick={() => onSelectGame("piano")}
+                        onClick={() => onSelectGame("fingerDance")}
                         className={`flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border p-8 transition-all ${
-                            selectedGame === "piano" ? "border-primary ring-2 ring-primary" : "hover:border-primary/50"
+                            selectedGame === "fingerDance" ? "border-primary ring-2 ring-primary" : "hover:border-primary/50"
                         }`}
                     >
                         <Piano className="h-12 w-12 text-blue-500" />
                         <h3 className="text-lg font-semibold">Piyano Oyunu</h3>
-                        <p className="text-sm text-muted-foreground">Oyun Tipi: {gameTypeMap.piano}</p>
+                        <p className="text-sm text-muted-foreground">Oyun Tipi: fingerDance</p>
                     </div>
                 </div>
             </CardContent>
