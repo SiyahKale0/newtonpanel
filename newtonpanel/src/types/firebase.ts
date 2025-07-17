@@ -63,7 +63,7 @@ export interface AppleGameConfig extends BaseGameConfig {
     handPerHundred: number;
     // YENİ EKLENEN ALANLAR
     gameMode: "Reach" | "Grip" | "Carry" | "Sort";
-    level: 1 | 2 | 3;
+    level: number;
     status: "idle" | "playing" | "finish";
 }
 
@@ -73,6 +73,7 @@ export interface FingerDanceConfig extends BaseGameConfig {
     speed: number;
     targetFingers: number[];
     handPerHundred: number;
+    status: "idle" | "playing" | "finish";
 }
 
 export type GameConfig = AppleGameConfig | FingerDanceConfig;
@@ -122,4 +123,9 @@ export interface Rom {
         leftFingers: { max: number; min: number }[];
         rightFingers: { max: number; min: number }[];
     };
+}
+export interface SceneObject {
+    id: string;
+    type: 'apple' | 'basket';
+    position: [number, number, number];
 }
