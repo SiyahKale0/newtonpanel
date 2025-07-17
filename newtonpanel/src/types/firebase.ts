@@ -128,4 +128,6 @@ export interface SceneObject {
     id: string;
     type: 'apple' | 'basket';
     position: [number, number, number];
+    rotation : [number, number, number];
+    scale : [number, number, number];
 }

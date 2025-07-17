@@ -1,96 +1,104 @@
 // src/components/three-d-grid.tsx
-
 "use client"
 
-import * as React from "react"
-import { Canvas } from "@react-three/fiber"
-import { Grid, OrbitControls, Text, Box, Sphere } from "@react-three/drei"
-import type { DashboardApple, DashboardBasket } from "@/types/dashboard"
+import React, { useMemo, useRef } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Grid, OrbitControls, DragControls, Sphere, Cylinder } from '@react-three/drei';
+import * as THREE from 'three';
+import type { SceneObject } from '@/types/firebase';
+
+// Tek bir sürüklenebilir nesneyi temsil eden bileşen
+const DraggableObject = React.memo(({ object }: { object: SceneObject }) => {
+    const geometry = useMemo(() => {
+        return object.type === 'apple'
+            ? <Sphere args={[0.2, 32, 32]} />
+            : <Cylinder args={[0.3, 0.4, 0.5, 16]} />; // Sepet için silindir
+    }, [object.type]);
+
+    const color = useMemo(() => {
+        return object.type === 'apple' ? '#e74c3c' : '#8d6e63';
+    }, [object.type]);
+
+    return (
+        <mesh position={object.position} castShadow userData={{ id: object.id }}>
+            {geometry}
+            <meshStandardMaterial color={color} />
+        </mesh>
+    );
+});
+
+DraggableObject.displayName = 'DraggableObject';
 
 interface ThreeDGridProps {
-    apples: DashboardApple[]
-    baskets: DashboardBasket[]
-    romLimit: number // cm cinsinden
+    objects: SceneObject[];
+    onObjectsChange: (objects: SceneObject[]) => void;
 }
 
-// 1 birim = 20cm olarak kabul ediyoruz
-const SCALE_FACTOR = 20
+export function ThreeDGrid({ objects, onObjectsChange }: ThreeDGridProps) {
+    const controlsRef = useRef<any>(null!);
 
-// Elma ve Sepet için görsel bileşenler
-function AppleModel({ position, type }: { position: [number, number, number], type: "fresh" | "rotten" }) {
-    const color = type === "fresh" ? "green" : "saddlebrown"
+    // Sürükleme bittiğinde tetiklenir ve nesnelerin son konumlarını kaydeder
+    const handleDragEnd = () => {
+        const controlledObjects = controlsRef.current?.objects;
+        if (!controlledObjects) return;
+
+        const positionMap = new Map<string, THREE.Vector3>();
+        controlledObjects.forEach((obj: THREE.Mesh) => {
+            if (obj.userData.id) {
+                positionMap.set(obj.userData.id, obj.position.clone());
+            }
+        });
+
+        const updatedObjects = objects.map(obj => {
+            const newPos = positionMap.get(obj.id);
+            if (newPos) {
+                // Nesnelerin zeminin altına gitmesini engelle
+                const y = Math.max(newPos.y, 0.1);
+                return { ...obj, position: [newPos.x, y, newPos.z] as [number, number, number] };
+            }
+            return obj;
+        });
+
+        // Sadece bir değişiklik varsa durumu güncelle
+        if (JSON.stringify(objects) !== JSON.stringify(updatedObjects)) {
+            onObjectsChange(updatedObjects);
+        }
+    };
+
+    // Nesneler değiştiğinde render edilecek elemanları hafızada tut
+    const draggableItems = useMemo(() =>
+        objects.map((obj) => <DraggableObject key={obj.id} object={obj} />),
+    [objects]);
+
     return (
-        <Sphere position={position} args={[0.15, 16, 16]}>
-            <meshStandardMaterial color={color} />
-        </Sphere>
-    )
-}
-
-function BasketModel({ position, type }: { position: [number, number, number], type: "fresh" | "rotten" }) {
-    const color = type === 'fresh' ? '#8a5a2a' : '#555555'; // Kahverengi ve Gri tonları
-    return (
-        <Box position={position} args={[0.5, 0.3, 0.5]}>
-            <meshStandardMaterial color={color} wireframe />
-        </Box>
-    )
-}
-
-
-export function ThreeDGrid({ apples, baskets, romLimit }: ThreeDGridProps) {
-    const gridLimit = Math.ceil((romLimit > 0 ? romLimit : 60) / SCALE_FACTOR) // Varsayılan limit 60cm
-
-    return (
-        <Canvas
-            camera={{ position: [gridLimit * 1.5, gridLimit * 1.5, gridLimit * 2.5], fov: 50 }}
-            className="rounded-lg bg-gray-100 dark:bg-gray-800 h-full w-full"
-        >
-            {/* Işıklandırma */}
-            <ambientLight intensity={1.5} />
-            <directionalLight position={[5, 5, 5]} intensity={1} />
-
-            {/* Grid ve Eksenler */}
+        <Canvas shadows camera={{ position: [-5, 5, 5], fov: 35 }}>
+            <ambientLight intensity={1.2} />
+            <directionalLight
+                castShadow
+                position={[10, 10, 5]}
+                intensity={1.5}
+                shadow-mapSize-width={2048}
+                shadow-mapSize-height={2048}
+            />
+            {/* Gölgelerin düşeceği zemin */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+                <planeGeometry args={[100, 100]} />
+                <shadowMaterial opacity={0.3} />
+            </mesh>
             <Grid
-                args={[gridLimit * 2, gridLimit * 2]}
-                cellSize={1}
-                cellThickness={1}
-                cellColor="#6f6f6f"
-                sectionSize={1}
-                sectionThickness={1.5}
-                sectionColor="#4a4a4a"
-                fadeDistance={gridLimit * 4}
+                position={[0, 0.01, 0]}
+                args={[10.5, 10.5]}
+                cellColor="#999"
+                sectionColor="#444"
+                fadeDistance={30}
                 infiniteGrid
             />
-
-            {/* Eksen Çizgileri ve Etiketleri */}
-            <axesHelper args={[gridLimit + 1]} />
-            <Text position={[gridLimit + 1.2, 0, 0]} fontSize={0.3} color="red">X</Text>
-            <Text position={[0, gridLimit + 1.2, 0]} fontSize={0.3} color="green">Y</Text>
-            <Text position={[0, 0, gridLimit + 1.2]} fontSize={0.3} color="blue">Z</Text>
-
-            {/* ROM Limitini gösteren küre */}
-            {romLimit > 0 && (
-                <Sphere args={[romLimit / SCALE_FACTOR, 32, 32]} position={[0,0,0]}>
-                    <meshStandardMaterial color="lightblue" transparent opacity={0.2} wireframe />
-                </Sphere>
-            )}
-
-            {/* Nesneler */}
-            {apples.map((apple) => (
-                <AppleModel
-                    key={apple.id}
-                    position={[apple.position.x, apple.position.y, apple.position.z]}
-                    type={apple.type}
-                />
-            ))}
-            {baskets.map((basket) => (
-                <BasketModel
-                    key={basket.id}
-                    position={[basket.position.x, basket.position.y, basket.position.z]}
-                    type={basket.type}
-                />
-            ))}
-
-            <OrbitControls makeDefault />
+            {/* Sürüklenebilir nesneleri kontrol eden bileşen */}
+            <DragControls ref={controlsRef} onDragEnd={handleDragEnd} autoTransform={true}>
+                {draggableItems}
+            </DragControls>
+            {/* Kamera kontrolleri */}
+            <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2.5} />
         </Canvas>
-    )
+    );
 }

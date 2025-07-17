@@ -17,7 +17,7 @@ import { updateDevice } from "@/services/deviceService";
 import { createOrUpdateGameConfig, updateGameConfig } from "@/services/gameConfigService";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/services/firebase";
-import { Patient as FirebasePatient, Device as FirebaseDevice, Session as FirebaseSession, FingerDanceConfig, AppleGameConfig } from "@/types/firebase";
+import { Patient as FirebasePatient, Device as FirebaseDevice, Session as FirebaseSession, FingerDanceConfig, AppleGameConfig, SceneObject } from "@/types/firebase";
 import type { DashboardPatient } from "@/types/dashboard";
 
 import { DeviceSelectionTab } from "./session-creator/tabs/DeviceSelectionTab";
@@ -27,6 +27,7 @@ import { FingerSelection } from "@/components/finger-selection";
 import { PreviewTab } from "./session-creator/tabs/PreviewTab";
 import { CalibrationTab } from "./session-creator/tabs/CalibrationTab";
 import { AppleGameDetailsTab } from "./session-creator/tabs/AppleGameDetailsTab";
+import { AppleGameCalibrationTab } from "./session-creator/tabs/AppleGameCalibration";
 
 const FINGER_MAP: { [key: string]: number } = {
     "Sol Serçe Parmağı": 0, "Sol Yüzük Parmağı": 1, "Sol Orta Parmak": 2, "Sol İşaret Parmağı": 3, "Sol Başparmak": 4,
@@ -51,6 +52,8 @@ export function SessionCreator() {
     const [selectedPatient, setSelectedPatient] = useState<DashboardPatient | null>(null);
     const [selectedGame, setSelectedGame] = useState<"appleGame" | "fingerDance" | null>(null);
     const [selectedFingers, setSelectedFingers] = useState<string[]>([]);
+    const [sceneObjects, setSceneObjects] = useState<SceneObject[]>([]);
+
 
     // Apple Game states
     const [appleGameMode, setAppleGameMode] = useState<"Reach" | "Grip" | "Carry" | "Sort" | null>(null);
@@ -279,8 +282,12 @@ export function SessionCreator() {
                 setActiveTab("game-details");
             } else if (activeTab === "game-details") {
                 if (selectedGame === 'appleGame') {
-                    await updateGameStatus("idle");
-                    setActiveTab("preview");
+                    if (appleGameLevel === 5) {
+                        setActiveTab("apple-game-calibration");
+                    } else {
+                        await updateGameStatus("idle");
+                        setActiveTab("preview");
+                    }
                 } else if (selectedGame === 'fingerDance') {
 
                     if (currentGameConfigId) {
@@ -289,6 +296,8 @@ export function SessionCreator() {
                     }
                     setActiveTab("calibration");
                 }
+            } else if (activeTab === "apple-game-calibration") {
+                setActiveTab("preview");
             } else if (activeTab === "calibration") {
                 setActiveTab("preview");
             }
@@ -306,16 +315,21 @@ export function SessionCreator() {
         }
         if (activeTab === "preview") {
             if (selectedGame === 'appleGame') {
-                setActiveTab("game-details");
+                if (appleGameLevel === 5) {
+                    setActiveTab("apple-game-calibration");
+                } else {
+                    setActiveTab("game-details");
+                }
             } else {
                 setActiveTab("calibration");
             }
         }
+        else if (activeTab === "apple-game-calibration") setActiveTab("game-details");
         else if (activeTab === "calibration") setActiveTab("game-details");
         else if (activeTab === "game-details") setActiveTab("setup");
         else if (activeTab === "setup") setActiveTab("patient");
         else if (activeTab === "patient") setActiveTab("device");
-    }, [activeTab, selectedDevice, selectedGame]);
+    }, [activeTab, selectedDevice, selectedGame, appleGameLevel]);
 
     const GameSettingsCard = () => (
         <Card className="h-full">
@@ -359,6 +373,8 @@ export function SessionCreator() {
                     return <AppleGameDetailsTab selectedMode={appleGameMode} selectedLevel={appleGameLevel} onSelectMode={handleSelectAppleGameMode} onSelectLevel={handleSelectAppleGameLevel} />;
                 }
                 return null;
+            case 'apple-game-calibration':
+                return <AppleGameCalibrationTab initialObjects={sceneObjects} onObjectsChange={setSceneObjects} />;
             case 'calibration':
                 return <CalibrationTab minRomCalibre={minRomCalibre} maxRomCalibre={maxRomCalibre} onToggle={handleCalibrationToggle} />;
             case 'preview':
@@ -410,13 +426,14 @@ export function SessionCreator() {
             </Card>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-6">
+                <TabsList className="grid w-full grid-cols-7">
                     <TabsTrigger value="device">1. Cihaz</TabsTrigger>
                     <TabsTrigger value="patient" disabled={!selectedDevice}>2. Hasta</TabsTrigger>
                     <TabsTrigger value="setup" disabled={!selectedPatient}>3. Oyun</TabsTrigger>
                     <TabsTrigger value="game-details" disabled={!selectedGame}>4. Oyun Detay</TabsTrigger>
-                    <TabsTrigger value="calibration" disabled={!selectedGame || selectedGame === 'appleGame'}>5. Kalibrasyon</TabsTrigger>
-                    <TabsTrigger value="preview" disabled={!selectedGame}>6. Önizleme</TabsTrigger>
+                    <TabsTrigger value="apple-game-calibration" disabled={selectedGame !== 'appleGame' || appleGameLevel !== 5}>5. Elma Yerleştir</TabsTrigger>
+                    <TabsTrigger value="calibration" disabled={selectedGame !== 'fingerDance'}>6. Kalibrasyon</TabsTrigger>
+                    <TabsTrigger value="preview" disabled={!selectedGame}>7. Önizleme</TabsTrigger>
                 </TabsList>
                 <div className="animate-in fade-in-20 transition-opacity duration-300">{renderContent()}</div>
             </Tabs>
