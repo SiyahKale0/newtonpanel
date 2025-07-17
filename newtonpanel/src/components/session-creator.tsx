@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Target, Loader2, Gamepad2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -53,7 +54,8 @@ export function SessionCreator() {
 
     // Apple Game states
     const [appleGameMode, setAppleGameMode] = useState<"Reach" | "Grip" | "Carry" | "Sort" | null>(null);
-    const [appleGameLevel, setAppleGameLevel] = useState<1 | 2 | 3 | null>(null);
+    // Seviye tipini 5'li sisteme geri döndürdük
+    const [appleGameLevel, setAppleGameLevel] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
 
 
     // Calibration states
@@ -69,6 +71,7 @@ export function SessionCreator() {
     const [sessionState, setSessionState] = useState<"configuring" | "running" | "finished">("configuring");
     const [timer, setTimer] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const [isFinishGameModalOpen, setIsFinishGameModalOpen] = useState(false);
 
     // Search & Sort states
     const [searchTerm, setSearchTerm] = useState("");
@@ -109,6 +112,42 @@ export function SessionCreator() {
             }
         }
     };
+
+    const handleFinishGame = async () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        await updateGameStatus("finish");
+        setIsFinishGameModalOpen(true);
+    };
+
+    const handleFinalizeSession = async () => {
+        if (currentSessionId && selectedDevice) {
+            try {
+                await updateSession(currentSessionId, {
+                    endTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                });
+                await updateDevice(selectedDevice.id, { patientID: "" });
+                setSessionState("finished");
+                setIsFinishGameModalOpen(false);
+                alert("Seans başarıyla bitirildi ve kaydedildi!");
+                // Reset to initial tab
+                setActiveTab("device");
+                // Reset all states
+                // ... (add full reset logic here if needed)
+            } catch (error) {
+                console.error("Seans bitirilirken hata:", error);
+                alert("Seans bitirilirken bir hata oluştu.");
+            }
+        }
+    };
+
+    const handlePlayAgain = async () => {
+        await updateGameStatus("idle");
+        setTimer(0);
+        setSessionState("configuring");
+        setActiveTab("game-details");
+        setIsFinishGameModalOpen(false);
+    };
+
 
     const startTimer = async () => {
         if (timerRef.current) clearInterval(timerRef.current);
@@ -177,9 +216,9 @@ export function SessionCreator() {
             if(game === 'appleGame') {
                 configData = {
                     gameType: "appleGame",
-                    gameMode: "Reach", // Varsayılan mod
-                    level: 1, // Varsayılan seviye
-                    status: "idle", // Varsayılan durum
+                    gameMode: "Reach",
+                    level: 0, // Varsayılan seviye (0-4 aralığında)
+                    status: "idle",
                     allowedHand: "both",
                     difficulty: "medium",
                     duration: 120,
@@ -193,6 +232,7 @@ export function SessionCreator() {
                     speed: 1.0,
                     targetFingers: [],
                     handPerHundred: 50,
+                    status: "idle",
                 };
             }
             await createOrUpdateGameConfig(configId, configData);
@@ -207,10 +247,11 @@ export function SessionCreator() {
         }
     };
 
-    const handleSelectAppleGameLevel = async (level: 1 | 2 | 3) => {
+    const handleSelectAppleGameLevel = async (level: 1 | 2 | 3 | 4 | 5) => {
         setAppleGameLevel(level);
         if (currentGameConfigId) {
-            await updateGameConfig(currentGameConfigId, { level });
+            // Panelde 1-5 arası seçilen değeri, Firebase'e 0-4 arası kaydet
+            await updateGameConfig(currentGameConfigId, { level: level - 1 });
         }
     };
 
@@ -239,9 +280,9 @@ export function SessionCreator() {
             } else if (activeTab === "game-details") {
                 if (selectedGame === 'appleGame') {
                     await updateGameStatus("idle");
-                    setActiveTab("preview"); // Kalibrasyonu atla
+                    setActiveTab("preview");
                 } else if (selectedGame === 'fingerDance') {
-                    // Piyano oyunu için mevcut mantık
+
                     if (currentGameConfigId) {
                         const numericFingerIds = selectedFingers.map(fingerName => FINGER_MAP[fingerName]).filter(id => id !== undefined);
                         await updateGameConfig(currentGameConfigId, { targetFingers: numericFingerIds, speed: gameSpeed, handPerHundred: handAperture });
@@ -356,7 +397,7 @@ export function SessionCreator() {
         }
 
         if (sessionState === "running") {
-            return <Button className="w-full" variant="destructive" onClick={stopTimer}>Seansı Bitir ve Kaydet</Button>;
+            return <Button className="w-full" variant="destructive" onClick={handleFinishGame}>Oyunu Bitir</Button>;
         }
 
         return <Button className="w-full" disabled>Seans Tamamlandı</Button>;
@@ -379,6 +420,22 @@ export function SessionCreator() {
                 </TabsList>
                 <div className="animate-in fade-in-20 transition-opacity duration-300">{renderContent()}</div>
             </Tabs>
+
+            <Dialog open={isFinishGameModalOpen} onOpenChange={setIsFinishGameModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Oyun Bitti!</DialogTitle>
+                        <DialogDescription>
+                            Sıradaki adımı seçin. Seansı tamamen bitirebilir veya aynı ayarlarla tekrar oynayabilirsiniz.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center gap-2 pt-4">
+                        <Button variant="outline" onClick={handlePlayAgain}>Yeniden Oyna</Button>
+                        <Button variant="destructive" onClick={handleFinalizeSession}>Seansı Tamamla ve Çık</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
 
             <div className="flex justify-between mt-6">
                 {renderFooterButtons()}
