@@ -5,13 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="282e61c9-7bd5-4530-b64d-fd54a07ba0dd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/scene/Apple.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/scene/Basket.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/AppleGameCalibration.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/AppleGameCalibrationTab.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/AppleGameDetailsTab.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/AppleGameDetailsTab.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/session-creator/tabs/AppleGameCalibration.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/newtonpanel/src/components/three-d-grid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/components/three-d-grid.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/newtonpanel/src/types/firebase.ts" beforeDir="false" afterPath="$PROJECT_DIR$/newtonpanel/src/types/firebase.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -70,6 +70,19 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="newtonpanel" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="newtonpanel" />
+      <option name="filePath" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
       <module name="newtonpanel" />
       <option name="filePath" />
@@ -123,7 +136,8 @@
       <workItem from="1752137427437" duration="5707000" />
       <workItem from="1752436706182" duration="651000" />
       <workItem from="1752741452957" duration="2337000" />
-      <workItem from="1752748934180" duration="314000" />
+      <workItem from="1752748934180" duration="7754000" />
+      <workItem from="1752782392926" duration="331000" />
     </task>
     <servers />
   </component>
