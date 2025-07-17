@@ -61,6 +61,10 @@ export interface AppleGameConfig extends BaseGameConfig {
     duration: number;           // Saniye cinsinden
     maxApples: number;
     handPerHundred: number;
+    // YENİ EKLENEN ALANLAR
+    gameMode: "Reach" | "Grip" | "Carry" | "Sort";
+    level: 1 | 2 | 3;
+    status: "idle" | "playing" | "finish";
 }
 
 export interface FingerDanceConfig extends BaseGameConfig {

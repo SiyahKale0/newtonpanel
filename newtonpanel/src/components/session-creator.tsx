@@ -13,11 +13,11 @@ import { Slider } from "@/components/ui/slider";
 import { getPatientById, incrementPatientSession } from "@/services/patientService";
 import { createNewSession, updateSession } from "@/services/sessionService";
 import { updateDevice } from "@/services/deviceService";
-import { createOrUpdateGameConfig } from "@/services/gameConfigService";
+import { createOrUpdateGameConfig, updateGameConfig } from "@/services/gameConfigService";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/services/firebase";
 import { Patient as FirebasePatient, Device as FirebaseDevice, Session as FirebaseSession, FingerDanceConfig, AppleGameConfig } from "@/types/firebase";
-import type { DashboardPatient, DashboardApple, DashboardBasket } from "@/types/dashboard";
+import type { DashboardPatient } from "@/types/dashboard";
 
 import { DeviceSelectionTab } from "./session-creator/tabs/DeviceSelectionTab";
 import { PatientSelectionTab } from "./session-creator/tabs/PatientSelectionTab";
@@ -25,6 +25,7 @@ import { GameSelectionTab } from "./session-creator/tabs/GameSelectionTab";
 import { FingerSelection } from "@/components/finger-selection";
 import { PreviewTab } from "./session-creator/tabs/PreviewTab";
 import { CalibrationTab } from "./session-creator/tabs/CalibrationTab";
+import { AppleGameDetailsTab } from "./session-creator/tabs/AppleGameDetailsTab";
 
 const FINGER_MAP: { [key: string]: number } = {
     "Sol Serçe Parmağı": 0, "Sol Yüzük Parmağı": 1, "Sol Orta Parmak": 2, "Sol İşaret Parmağı": 3, "Sol Başparmak": 4,
@@ -47,25 +48,27 @@ export function SessionCreator() {
     // Selection states
     const [selectedDevice, setSelectedDevice] = useState<FirebaseDevice | null>(null);
     const [selectedPatient, setSelectedPatient] = useState<DashboardPatient | null>(null);
-    const [selectedGame, setSelectedGame] = useState<"apple" | "piano" | null>(null);
+    const [selectedGame, setSelectedGame] = useState<"appleGame" | "fingerDance" | null>(null);
     const [selectedFingers, setSelectedFingers] = useState<string[]>([]);
+
+    // Apple Game states
+    const [appleGameMode, setAppleGameMode] = useState<"Reach" | "Grip" | "Carry" | "Sort" | null>(null);
+    const [appleGameLevel, setAppleGameLevel] = useState<1 | 2 | 3 | null>(null);
+
 
     // Calibration states
     const [minRomCalibre, setMinRomCalibre] = useState(false);
     const [maxRomCalibre, setMaxRomCalibre] = useState(false);
 
     // Game Settings states
-    const [handAperture, setHandAperture] = useState(50); // El açıklığı hedefi
-    const [gameSpeed, setGameSpeed] = useState(1.0); // Nota hızı
+    const [handAperture, setHandAperture] = useState(50);
+    const [gameSpeed, setGameSpeed] = useState(1.0);
 
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+    const [currentGameConfigId, setCurrentGameConfigId] = useState<string | null>(null);
     const [sessionState, setSessionState] = useState<"configuring" | "running" | "finished">("configuring");
     const [timer, setTimer] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Dummy states for apple/basket props
-    const [apples, setApples] = useState<DashboardApple[]>([]);
-    const [baskets, setBaskets] = useState<DashboardBasket[]>([]);
 
     // Search & Sort states
     const [searchTerm, setSearchTerm] = useState("");
@@ -97,14 +100,24 @@ export function SessionCreator() {
             .sort((a, b) => sortOrder === 'asc' ? a.age - b.age : sortOrder === 'desc' ? b.age - a.age : a.name.localeCompare(b.name));
     }, [allPatients, allDevices, searchTerm, sortOrder]);
 
+    const updateGameStatus = async (status: "idle" | "playing" | "finish") => {
+        if (currentGameConfigId) {
+            try {
+                await updateGameConfig(currentGameConfigId, { status });
+            } catch (error) {
+                console.error(`Oyun durumu (${status}) güncellenirken hata:`, error);
+            }
+        }
+    };
+
     const startTimer = async () => {
         if (timerRef.current) clearInterval(timerRef.current);
         if (currentSessionId) {
             try {
-                // REVİZE 3: Zaman damgasına saniye eklendi
                 await updateSession(currentSessionId, {
                     startTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                 });
+                await updateGameStatus("playing");
                 setSessionState("running");
                 timerRef.current = setInterval(() => {
                     setTimer(prev => prev + 1);
@@ -118,19 +131,15 @@ export function SessionCreator() {
 
     const stopTimer = async () => {
         if (timerRef.current) clearInterval(timerRef.current);
-        setSessionState("finished");
-        if (currentSessionId && selectedDevice) { // selectedDevice kontrolü eklendi
+        if (currentSessionId && selectedDevice) {
             try {
-                // REVİZE 3: Zaman damgasına saniye eklendi
                 await updateSession(currentSessionId, {
                     endTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                 });
-
-                // REVİZE 4: Cihazın patientID'si temizleniyor
                 await updateDevice(selectedDevice.id, { patientID: "" });
-
+                await updateGameStatus("finish");
+                setSessionState("finished");
                 alert("Seans başarıyla bitirildi ve kaydedildi!");
-
             } catch (error) {
                 console.error("Seans bitirilirken hata:", error);
                 alert("Seans bitirilirken bir hata oluştu.");
@@ -138,9 +147,6 @@ export function SessionCreator() {
         }
     };
 
-    // ===================================================================
-    //                        ↓↓↓ DEĞİŞİKLİK BURADA ↓↓↓
-    // ===================================================================
     const handleCalibrationToggle = async (type: 'min' | 'max') => {
         if (!currentSessionId) {
             console.error("Kalibrasyon yapılamadı: Aktif seans ID'si yok.");
@@ -149,27 +155,64 @@ export function SessionCreator() {
         }
 
         const isMin = type === 'min';
-        // Mevcut durumun tersini al
         const newStatus = isMin ? !minRomCalibre : !maxRomCalibre;
         const fieldToUpdate = isMin ? { minRomClibre: newStatus } : { maxRomClibre: newStatus };
 
         try {
-            // Firebase'i anlık olarak güncelle
             await updateSession(currentSessionId, fieldToUpdate);
-            // Firebase güncellemesi başarılı olursa, lokal state'i de güncelle
-            if (isMin) {
-                setMinRomCalibre(newStatus);
-            } else {
-                setMaxRomCalibre(newStatus);
-            }
+            if (isMin) { setMinRomCalibre(newStatus); } else { setMaxRomCalibre(newStatus); }
         } catch (error) {
             console.error("Firebase kalibrasyon durumu güncellenirken hata oluştu:", error);
             alert("Kalibrasyon durumu güncellenirken bir sunucu hatası oluştu. Lütfen tekrar deneyin.");
         }
     };
-    // ===================================================================
-    //                        ↑↑↑ DEĞİŞİKLİK BURADA ↑↑↑
-    // ===================================================================
+
+    const handleSelectGame = async (game: "appleGame" | "fingerDance") => {
+        setSelectedGame(game);
+        if (currentSessionId) {
+            const configId = `config_${currentSessionId}`;
+            setCurrentGameConfigId(configId);
+            let configData: Omit<AppleGameConfig, 'id'> | Omit<FingerDanceConfig, 'id'>;
+
+            if(game === 'appleGame') {
+                configData = {
+                    gameType: "appleGame",
+                    gameMode: "Reach", // Varsayılan mod
+                    level: 1, // Varsayılan seviye
+                    status: "idle", // Varsayılan durum
+                    allowedHand: "both",
+                    difficulty: "medium",
+                    duration: 120,
+                    maxApples: 30,
+                    handPerHundred: 50,
+                };
+            } else { // fingerDance
+                configData = {
+                    gameType: "fingerDance",
+                    song: "fur_elise",
+                    speed: 1.0,
+                    targetFingers: [],
+                    handPerHundred: 50,
+                };
+            }
+            await createOrUpdateGameConfig(configId, configData);
+            await updateSession(currentSessionId, { gameConfigID: configId, gameType: game });
+        }
+    };
+
+    const handleSelectAppleGameMode = async (mode: "Reach" | "Grip" | "Carry" | "Sort") => {
+        setAppleGameMode(mode);
+        if (currentGameConfigId) {
+            await updateGameConfig(currentGameConfigId, { gameMode: mode });
+        }
+    };
+
+    const handleSelectAppleGameLevel = async (level: 1 | 2 | 3) => {
+        setAppleGameLevel(level);
+        if (currentGameConfigId) {
+            await updateGameConfig(currentGameConfigId, { level });
+        }
+    };
 
     const handleNext = async () => {
         setIsLoading(true);
@@ -201,37 +244,17 @@ export function SessionCreator() {
             } else if (activeTab === "setup" && selectedGame) {
                 setActiveTab("game-details");
             } else if (activeTab === "game-details") {
-                if (currentSessionId) {
-                    const newConfigId = `config_${currentSessionId}`;
-                    let newConfigData: Omit<FingerDanceConfig, 'id'> | Omit<AppleGameConfig, 'id'>;
-
-                    if (selectedGame === 'piano') {
+                if (selectedGame === 'appleGame') {
+                    await updateGameStatus("idle");
+                    setActiveTab("preview"); // Kalibrasyonu atla
+                } else if (selectedGame === 'fingerDance') {
+                    // Piyano oyunu için mevcut mantık
+                    if (currentGameConfigId) {
                         const numericFingerIds = selectedFingers.map(fingerName => FINGER_MAP[fingerName]).filter(id => id !== undefined);
-                        newConfigData = {
-                            gameType: "fingerDance",
-                            song: "fur_elise",
-                            speed: gameSpeed,
-                            targetFingers: numericFingerIds,
-                            handPerHundred: handAperture,
-                        };
-                        await createOrUpdateGameConfig(newConfigId, newConfigData);
-                        await updateSession(currentSessionId, { gameConfigID: newConfigId, gameType: 'fingerDance' });
-                        console.log(`Piyano oyunu konfigürasyonu (${newConfigId}) oluşturuldu.`);
-                    } else if (selectedGame === 'apple') {
-                        newConfigData = {
-                            gameType: "appleGame",
-                            allowedHand: "both",
-                            difficulty: "medium",
-                            duration: 120,
-                            maxApples: 30,
-                            handPerHundred: handAperture,
-                        };
-                        await createOrUpdateGameConfig(newConfigId, newConfigData);
-                        await updateSession(currentSessionId, { gameConfigID: newConfigId, gameType: 'appleGame' });
-                        console.log(`Elma oyunu konfigürasyonu (${newConfigId}) oluşturuldu.`);
+                        await updateGameConfig(currentGameConfigId, { targetFingers: numericFingerIds, speed: gameSpeed, handPerHundred: handAperture });
                     }
+                    setActiveTab("calibration");
                 }
-                setActiveTab("calibration");
             } else if (activeTab === "calibration") {
                 setActiveTab("preview");
             }
@@ -247,21 +270,24 @@ export function SessionCreator() {
         if (activeTab === 'setup' && selectedDevice?.patientID) {
             await updateDevice(selectedDevice.id, { patientID: "" });
         }
-        if (activeTab === "preview") setActiveTab("calibration");
+        if (activeTab === "preview") {
+            if (selectedGame === 'appleGame') {
+                setActiveTab("game-details");
+            } else {
+                setActiveTab("calibration");
+            }
+        }
         else if (activeTab === "calibration") setActiveTab("game-details");
         else if (activeTab === "game-details") setActiveTab("setup");
         else if (activeTab === "setup") setActiveTab("patient");
         else if (activeTab === "patient") setActiveTab("device");
-    }, [activeTab, selectedDevice]);
+    }, [activeTab, selectedDevice, selectedGame]);
 
     const GameSettingsCard = () => (
         <Card className="h-full">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Gamepad2 className="h-5 w-5" /> Oyun Ayarları</CardTitle>
-                <CardDescription>Oyun mekaniklerini bu seansa özel yapılandırın.</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Gamepad2 className="h-5 w-5" /> Oyun Ayarları</CardTitle><CardDescription>Oyun mekaniklerini bu seansa özel yapılandırın.</CardDescription></CardHeader>
             <CardContent className="space-y-8 pt-4">
-                {selectedGame === 'piano' && (
+                {selectedGame === 'fingerDance' && (
                     <div className="space-y-3">
                         <Label htmlFor="speed">Nota Hızı: {gameSpeed.toFixed(1)}x</Label>
                         <Slider id="speed" min={0.5} max={2.5} step={0.1} value={[gameSpeed]} onValueChange={(v) => setGameSpeed(v[0])}/>
@@ -286,37 +312,21 @@ export function SessionCreator() {
             case 'patient':
                 return <PatientSelectionTab patients={filteredAndSortedPatients} selectedPatient={selectedPatient} onSelectPatient={setSelectedPatient} searchTerm={searchTerm} onSearchTermChange={setSearchTerm} sortOrder={sortOrder} onSortOrderChange={setSortOrder} />;
             case 'setup':
-                return <GameSelectionTab selectedGame={selectedGame} onSelectGame={setSelectedGame} />;
+                return <GameSelectionTab selectedGame={selectedGame} onSelectGame={handleSelectGame} />;
             case 'game-details':
-                if (selectedGame === 'piano') {
+                if (selectedGame === 'fingerDance') {
                     return (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <FingerSelection selectedFingers={selectedFingers} onSelectionChange={setSelectedFingers} />
                             <GameSettingsCard />
                         </div>
                     );
-                } else if (selectedGame === 'apple') {
-                    return (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* TODO: Elma oyunu için özel ayarlar buraya eklenebilir. */}
-                            <GameSettingsCard />
-                        </div>
-                    );
+                } else if (selectedGame === 'appleGame') {
+                    return <AppleGameDetailsTab selectedMode={appleGameMode} selectedLevel={appleGameLevel} onSelectMode={handleSelectAppleGameMode} onSelectLevel={handleSelectAppleGameLevel} />;
                 }
                 return null;
-            // ===================================================================
-            //                        ↓↓↓ DEĞİŞİKLİK BURADA ↓↓↓
-            // ===================================================================
             case 'calibration':
-                return <CalibrationTab
-                    minRomCalibre={minRomCalibre}
-                    maxRomCalibre={maxRomCalibre}
-                    onToggle={handleCalibrationToggle}
-                    currentSessionId={currentSessionId}
-                />;
-            // ===================================================================
-            //                        ↑↑↑ DEĞİŞİKLİK BURADA ↑↑↑
-            // ===================================================================
+                return <CalibrationTab minRomCalibre={minRomCalibre} maxRomCalibre={maxRomCalibre} onToggle={handleCalibrationToggle} />;
             case 'preview':
                 return <PreviewTab selectedPatient={selectedPatient} selectedGame={selectedGame} sessionState={sessionState} timer={timer} />;
             default: return null;
@@ -328,8 +338,11 @@ export function SessionCreator() {
         if (activeTab === 'device') return !selectedDevice;
         if (activeTab === 'patient') return !selectedPatient;
         if (activeTab === 'setup') return !selectedGame;
-        if (activeTab === 'game-details' && selectedGame === 'piano' && selectedFingers.length === 0) return true;
-        if (activeTab === 'calibration') return false; // Kalibrasyon zorunlu değil
+        if (activeTab === 'game-details') {
+            if (selectedGame === 'fingerDance' && selectedFingers.length === 0) return true;
+            if (selectedGame === 'appleGame' && (!appleGameMode || !appleGameLevel)) return true;
+        }
+        if (activeTab === 'calibration' && selectedGame === 'fingerDance') return false;
         return false;
     };
 
@@ -368,7 +381,7 @@ export function SessionCreator() {
                     <TabsTrigger value="patient" disabled={!selectedDevice}>2. Hasta</TabsTrigger>
                     <TabsTrigger value="setup" disabled={!selectedPatient}>3. Oyun</TabsTrigger>
                     <TabsTrigger value="game-details" disabled={!selectedGame}>4. Oyun Detay</TabsTrigger>
-                    <TabsTrigger value="calibration" disabled={!selectedGame}>5. Kalibrasyon</TabsTrigger>
+                    <TabsTrigger value="calibration" disabled={!selectedGame || selectedGame === 'appleGame'}>5. Kalibrasyon</TabsTrigger>
                     <TabsTrigger value="preview" disabled={!selectedGame}>6. Önizleme</TabsTrigger>
                 </TabsList>
                 <div className="animate-in fade-in-20 transition-opacity duration-300">{renderContent()}</div>
