@@ -4,7 +4,7 @@
 // 'type' özelliği artık 'apple_fresh', 'apple_rotten' ve 'basket' olabilir.
 export interface SceneObject {
     id: string;
-    type: 'apple_fresh' | 'apple_rotten' | 'basket';
+    type: string;
     position: [number, number, number];
     rotation: [number, number, number];
     scale: [number, number, number];

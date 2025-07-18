@@ -38,15 +38,15 @@ export function AppleGameCalibrationTab({ initialObjects = [], onObjectsChange }
             return;
         }
 
-        // Boş bir hücre bulana kadar rastgele pozisyon dene
+        // Boş bir hücre bulana kadar rastgele pozisyon dene - Artık 0'dan başlıyor
         let newPosition: [number, number, number];
         let isOccupied = true;
         let attempts = 0;
         do {
             const randomPosition: [number, number, number] = [
-                Math.floor(Math.random() * 8) - 4, // x (-4 to 3)
+                Math.floor(Math.random() * 8), // x (0 to 7)
                 type === 'basket' ? 0 : Math.floor(Math.random() * 5), // y (sepet için 0, elma için 0-4)
-                Math.floor(Math.random() * 5) - 2  // z (-2 to 2)
+                Math.floor(Math.random() * 5)  // z (0 to 4)
             ];
             newPosition = getClampedPosition(randomPosition, type);
             isOccupied = objects.some(obj =>
@@ -101,8 +101,6 @@ export function AppleGameCalibrationTab({ initialObjects = [], onObjectsChange }
 
         if (isOccupied) {
             console.warn(`Pozisyon [${clampedPosition.join(', ')}] dolu.`);
-            // İsteğe bağlı: kullanıcıya uyarı gösterilebilir.
-            // Şimdilik değişikliği uygulamıyoruz.
             return;
         }
 
@@ -113,7 +111,6 @@ export function AppleGameCalibrationTab({ initialObjects = [], onObjectsChange }
         updateObjects(updatedObjects);
 
     }, [objects]);
-
 
     const clearAll = () => {
         updateObjects([]);
@@ -134,7 +131,7 @@ export function AppleGameCalibrationTab({ initialObjects = [], onObjectsChange }
                     <CardHeader>
                         <CardTitle>Elma ve Sepetleri Yerleştir</CardTitle>
                         <CardDescription>
-                            3D alanda nesneleri sürükleyerek veya koordinatlarını girerek oyun alanını oluşturun.
+                            3D alanda koordinatları girerek oyun alanını oluşturun. Koordinatlar 0'dan başlar.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="h-[calc(100%-80px)]">
@@ -155,9 +152,18 @@ export function AppleGameCalibrationTab({ initialObjects = [], onObjectsChange }
                     <CardContent className="flex-grow space-y-4 overflow-y-auto p-4">
                         <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                             <h4 className="font-semibold text-sm mb-2">Nesne Ekle</h4>
-                            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addObject('apple_fresh')}><Apple className="h-4 w-4 mr-2 text-red-600"/> Sağlam Elma</Button>
-                            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addObject('apple_rotten')}><Apple className="h-4 w-4 mr-2 text-purple-600"/> Çürük Elma</Button>
-                            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addObject('basket')}><ShoppingBasket className="h-4 w-4 mr-2 text-yellow-500"/> Sepet</Button>
+                            <div className="text-xs text-gray-600 mb-2">
+                                Grid boyutları: X(0-7), Y(0-4), Z(0-4)
+                            </div>
+                            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addObject('apple_fresh')}>
+                                <Apple className="h-4 w-4 mr-2 text-red-600"/> Sağlam Elma
+                            </Button>
+                            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addObject('apple_rotten')}>
+                                <Apple className="h-4 w-4 mr-2 text-purple-600"/> Çürük Elma
+                            </Button>
+                            <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => addObject('basket')}>
+                                <ShoppingBasket className="h-4 w-4 mr-2 text-yellow-500"/> Sepet
+                            </Button>
                             <Button variant="destructive" size="sm" className="w-full justify-start mt-2" onClick={clearAll} disabled={objects.length === 0}>
                                 <Trash2 className="mr-2 h-4 w-4" /> Tümünü Temizle
                             </Button>
@@ -170,15 +176,42 @@ export function AppleGameCalibrationTab({ initialObjects = [], onObjectsChange }
                                     <div key={obj.id} className="p-2 border rounded-md space-y-2">
                                         <div className="flex items-center justify-between">
                                             {getBadgeForType(obj.type)}
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeObject(obj.id)}><Trash2 className="h-3 w-3"/></Button>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeObject(obj.id)}>
+                                                <Trash2 className="h-3 w-3"/>
+                                            </Button>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Label htmlFor={`x-${obj.id}`} className="text-xs">X:</Label>
-                                            <Input id={`x-${obj.id}`} type="number" value={obj.position[0]} onChange={(e) => handleCoordinateChange(obj.id, 'x', e.target.value)} className="w-14 h-7 text-xs" />
+                                            <Input 
+                                                id={`x-${obj.id}`} 
+                                                type="number" 
+                                                value={obj.position[0]} 
+                                                onChange={(e) => handleCoordinateChange(obj.id, 'x', e.target.value)} 
+                                                className="w-14 h-7 text-xs"
+                                                min="0"
+                                                max="7"
+                                            />
                                             <Label htmlFor={`y-${obj.id}`} className="text-xs">Y:</Label>
-                                            <Input id={`y-${obj.id}`} type="number" value={obj.position[1]} onChange={(e) => handleCoordinateChange(obj.id, 'y', e.target.value)} className="w-14 h-7 text-xs" disabled={obj.type === 'basket'} />
+                                            <Input 
+                                                id={`y-${obj.id}`} 
+                                                type="number" 
+                                                value={obj.position[1]} 
+                                                onChange={(e) => handleCoordinateChange(obj.id, 'y', e.target.value)} 
+                                                className="w-14 h-7 text-xs" 
+                                                disabled={obj.type === 'basket'}
+                                                min="0"
+                                                max="4"
+                                            />
                                             <Label htmlFor={`z-${obj.id}`} className="text-xs">Z:</Label>
-                                            <Input id={`z-${obj.id}`} type="number" value={obj.position[2]} onChange={(e) => handleCoordinateChange(obj.id, 'z', e.target.value)} className="w-14 h-7 text-xs" />
+                                            <Input 
+                                                id={`z-${obj.id}`} 
+                                                type="number" 
+                                                value={obj.position[2]} 
+                                                onChange={(e) => handleCoordinateChange(obj.id, 'z', e.target.value)} 
+                                                className="w-14 h-7 text-xs"
+                                                min="0"
+                                                max="4"
+                                            />
                                         </div>
                                     </div>
                                 ))}
