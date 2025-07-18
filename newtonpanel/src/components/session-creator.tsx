@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Target, Loader2, Gamepad2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,7 @@ import { updateDevice } from "@/services/deviceService";
 import { createOrUpdateGameConfig, updateGameConfig } from "@/services/gameConfigService";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/services/firebase";
-import { Patient as FirebasePatient, Device as FirebaseDevice, Session as FirebaseSession, FingerDanceConfig, AppleGameConfig } from "@/types/firebase";
+import { Patient as FirebasePatient, Device as FirebaseDevice, Session as FirebaseSession, FingerDanceConfig, AppleGameConfig, SceneObject } from "@/types/firebase";
 import type { DashboardPatient } from "@/types/dashboard";
 
 import { DeviceSelectionTab } from "./session-creator/tabs/DeviceSelectionTab";
@@ -26,6 +27,8 @@ import { FingerSelection } from "@/components/finger-selection";
 import { PreviewTab } from "./session-creator/tabs/PreviewTab";
 import { CalibrationTab } from "./session-creator/tabs/CalibrationTab";
 import { AppleGameDetailsTab } from "./session-creator/tabs/AppleGameDetailsTab";
+// DEĞİŞTİ: Artık AppleGameCalibrationTab'ı import ediyoruz (içeriği yenilendi)
+import { AppleGameCalibrationTab } from "./session-creator/tabs/AppleGameCalibrationTab";
 
 const FINGER_MAP: { [key: string]: number } = {
     "Sol Serçe Parmağı": 0, "Sol Yüzük Parmağı": 1, "Sol Orta Parmak": 2, "Sol İşaret Parmağı": 3, "Sol Başparmak": 4,
@@ -50,10 +53,13 @@ export function SessionCreator() {
     const [selectedPatient, setSelectedPatient] = useState<DashboardPatient | null>(null);
     const [selectedGame, setSelectedGame] = useState<"appleGame" | "fingerDance" | null>(null);
     const [selectedFingers, setSelectedFingers] = useState<string[]>([]);
+    // YENİ: Sahne nesnelerinin state'i
+    const [sceneObjects, setSceneObjects] = useState<SceneObject[]>([]);
+
 
     // Apple Game states
     const [appleGameMode, setAppleGameMode] = useState<"Reach" | "Grip" | "Carry" | "Sort" | null>(null);
-    const [appleGameLevel, setAppleGameLevel] = useState<1 | 2 | 3 | null>(null);
+    const [appleGameLevel, setAppleGameLevel] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
 
 
     // Calibration states
@@ -69,6 +75,7 @@ export function SessionCreator() {
     const [sessionState, setSessionState] = useState<"configuring" | "running" | "finished">("configuring");
     const [timer, setTimer] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const [isFinishGameModalOpen, setIsFinishGameModalOpen] = useState(false);
 
     // Search & Sort states
     const [searchTerm, setSearchTerm] = useState("");
@@ -109,6 +116,39 @@ export function SessionCreator() {
             }
         }
     };
+
+    const handleFinishGame = async () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        await updateGameStatus("finish");
+        setIsFinishGameModalOpen(true);
+    };
+
+    const handleFinalizeSession = async () => {
+        if (currentSessionId && selectedDevice) {
+            try {
+                await updateSession(currentSessionId, {
+                    endTime: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                });
+                await updateDevice(selectedDevice.id, { patientID: "" });
+                setSessionState("finished");
+                setIsFinishGameModalOpen(false);
+                alert("Seans başarıyla bitirildi ve kaydedildi!");
+                setActiveTab("device");
+            } catch (error) {
+                console.error("Seans bitirilirken hata:", error);
+                alert("Seans bitirilirken bir hata oluştu.");
+            }
+        }
+    };
+
+    const handlePlayAgain = async () => {
+        await updateGameStatus("idle");
+        setTimer(0);
+        setSessionState("configuring");
+        setActiveTab("game-details");
+        setIsFinishGameModalOpen(false);
+    };
+
 
     const startTimer = async () => {
         if (timerRef.current) clearInterval(timerRef.current);
@@ -176,23 +216,14 @@ export function SessionCreator() {
 
             if(game === 'appleGame') {
                 configData = {
-                    gameType: "appleGame",
-                    gameMode: "Reach", // Varsayılan mod
-                    level: 1, // Varsayılan seviye
-                    status: "idle", // Varsayılan durum
-                    allowedHand: "both",
-                    difficulty: "medium",
-                    duration: 120,
-                    maxApples: 30,
-                    handPerHundred: 50,
+                    gameType: "appleGame", gameMode: "Reach", level: 0, status: "idle",
+                    allowedHand: "both", difficulty: "medium", duration: 120, maxApples: 30,
+                    handPerHundred: 50, appleDirectory: [], // YENİ: Başlangıçta boş dizi
                 };
-            } else { // fingerDance
+            } else {
                 configData = {
-                    gameType: "fingerDance",
-                    song: "fur_elise",
-                    speed: 1.0,
-                    targetFingers: [],
-                    handPerHundred: 50,
+                    gameType: "fingerDance", song: "fur_elise", speed: 1.0,
+                    targetFingers: [], handPerHundred: 50, status: "idle",
                 };
             }
             await createOrUpdateGameConfig(configId, configData);
@@ -202,24 +233,19 @@ export function SessionCreator() {
 
     const handleSelectAppleGameMode = async (mode: "Reach" | "Grip" | "Carry" | "Sort") => {
         setAppleGameMode(mode);
-        if (currentGameConfigId) {
-            await updateGameConfig(currentGameConfigId, { gameMode: mode });
-        }
+        if (currentGameConfigId) await updateGameConfig(currentGameConfigId, { gameMode: mode });
     };
 
-    const handleSelectAppleGameLevel = async (level: 1 | 2 | 3) => {
+    const handleSelectAppleGameLevel = async (level: 1 | 2 | 3 | 4 | 5) => {
         setAppleGameLevel(level);
-        if (currentGameConfigId) {
-            await updateGameConfig(currentGameConfigId, { level });
-        }
+        if (currentGameConfigId) await updateGameConfig(currentGameConfigId, { level: level - 1 });
     };
 
     const handleNext = async () => {
         setIsLoading(true);
         try {
-            if (activeTab === "device" && selectedDevice) {
-                setActiveTab("patient");
-            } else if (activeTab === "patient" && selectedPatient && selectedDevice) {
+            if (activeTab === "device" && selectedDevice) setActiveTab("patient");
+            else if (activeTab === "patient" && selectedPatient && selectedDevice) {
                 const patientData = await getPatientById(selectedPatient.id);
                 const newSessionId = `${selectedPatient.id}_session_${(patientData?.sessionCount ?? 0) + 1}`;
                 setCurrentSessionId(newSessionId);
@@ -241,23 +267,30 @@ export function SessionCreator() {
                     updateDevice(selectedDevice.id, { patientID: selectedPatient.id })
                 ]);
                 setActiveTab("setup");
-            } else if (activeTab === "setup" && selectedGame) {
-                setActiveTab("game-details");
-            } else if (activeTab === "game-details") {
+            } else if (activeTab === "setup" && selectedGame) setActiveTab("game-details");
+            else if (activeTab === "game-details") {
                 if (selectedGame === 'appleGame') {
-                    await updateGameStatus("idle");
-                    setActiveTab("preview"); // Kalibrasyonu atla
+                    if (appleGameLevel === 5) setActiveTab("apple-game-calibration");
+                    else {
+                        await updateGameStatus("idle");
+                        setActiveTab("preview");
+                    }
                 } else if (selectedGame === 'fingerDance') {
-                    // Piyano oyunu için mevcut mantık
                     if (currentGameConfigId) {
                         const numericFingerIds = selectedFingers.map(fingerName => FINGER_MAP[fingerName]).filter(id => id !== undefined);
                         await updateGameConfig(currentGameConfigId, { targetFingers: numericFingerIds, speed: gameSpeed, handPerHundred: handAperture });
                     }
                     setActiveTab("calibration");
                 }
-            } else if (activeTab === "calibration") {
+            }
+            // YENİ: Kalibrasyon ekranından sonra onayla ve önizlemeye geç
+            else if (activeTab === "apple-game-calibration") {
+                if (currentGameConfigId) {
+                    await updateGameConfig(currentGameConfigId, { appleDirectory: sceneObjects });
+                }
                 setActiveTab("preview");
             }
+            else if (activeTab === "calibration") setActiveTab("preview");
         } catch (error) {
             console.error("İleri adıma geçerken hata:", error);
             alert(`İşlem sırasında bir hata oluştu: ${error instanceof Error ? error.message : String(error)}`);
@@ -272,16 +305,16 @@ export function SessionCreator() {
         }
         if (activeTab === "preview") {
             if (selectedGame === 'appleGame') {
-                setActiveTab("game-details");
-            } else {
-                setActiveTab("calibration");
-            }
+                if (appleGameLevel === 5) setActiveTab("apple-game-calibration");
+                else setActiveTab("game-details");
+            } else setActiveTab("calibration");
         }
+        else if (activeTab === "apple-game-calibration") setActiveTab("game-details");
         else if (activeTab === "calibration") setActiveTab("game-details");
         else if (activeTab === "game-details") setActiveTab("setup");
         else if (activeTab === "setup") setActiveTab("patient");
         else if (activeTab === "patient") setActiveTab("device");
-    }, [activeTab, selectedDevice, selectedGame]);
+    }, [activeTab, selectedDevice, selectedGame, appleGameLevel]);
 
     const GameSettingsCard = () => (
         <Card className="h-full">
@@ -307,28 +340,17 @@ export function SessionCreator() {
         if (loadingData) return (<Card className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /><p className="ml-4 text-muted-foreground">Veriler Yükleniyor...</p></Card>);
 
         switch(activeTab) {
-            case 'device':
-                return <DeviceSelectionTab devices={allDevices} selectedDevice={selectedDevice} onSelectDevice={setSelectedDevice} />;
-            case 'patient':
-                return <PatientSelectionTab patients={filteredAndSortedPatients} selectedPatient={selectedPatient} onSelectPatient={setSelectedPatient} searchTerm={searchTerm} onSearchTermChange={setSearchTerm} sortOrder={sortOrder} onSortOrderChange={setSortOrder} />;
-            case 'setup':
-                return <GameSelectionTab selectedGame={selectedGame} onSelectGame={handleSelectGame} />;
+            case 'device': return <DeviceSelectionTab devices={allDevices} selectedDevice={selectedDevice} onSelectDevice={setSelectedDevice} />;
+            case 'patient': return <PatientSelectionTab patients={filteredAndSortedPatients} selectedPatient={selectedPatient} onSelectPatient={setSelectedPatient} searchTerm={searchTerm} onSearchTermChange={setSearchTerm} sortOrder={sortOrder} onSortOrderChange={setSortOrder} />;
+            case 'setup': return <GameSelectionTab selectedGame={selectedGame} onSelectGame={handleSelectGame} />;
             case 'game-details':
-                if (selectedGame === 'fingerDance') {
-                    return (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <FingerSelection selectedFingers={selectedFingers} onSelectionChange={setSelectedFingers} />
-                            <GameSettingsCard />
-                        </div>
-                    );
-                } else if (selectedGame === 'appleGame') {
-                    return <AppleGameDetailsTab selectedMode={appleGameMode} selectedLevel={appleGameLevel} onSelectMode={handleSelectAppleGameMode} onSelectLevel={handleSelectAppleGameLevel} />;
-                }
+                if (selectedGame === 'fingerDance') return (<div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><FingerSelection selectedFingers={selectedFingers} onSelectionChange={setSelectedFingers} /><GameSettingsCard /></div>);
+                if (selectedGame === 'appleGame') return <AppleGameDetailsTab selectedMode={appleGameMode} selectedLevel={appleGameLevel} onSelectMode={handleSelectAppleGameMode} onSelectLevel={handleSelectAppleGameLevel} />;
                 return null;
-            case 'calibration':
-                return <CalibrationTab minRomCalibre={minRomCalibre} maxRomCalibre={maxRomCalibre} onToggle={handleCalibrationToggle} />;
-            case 'preview':
-                return <PreviewTab selectedPatient={selectedPatient} selectedGame={selectedGame} sessionState={sessionState} timer={timer} />;
+            // YENİ: AppleGameCalibrationTab'ı burada render ediyoruz
+            case 'apple-game-calibration': return <AppleGameCalibrationTab initialObjects={sceneObjects} onObjectsChange={setSceneObjects} />;
+            case 'calibration': return <CalibrationTab minRomCalibre={minRomCalibre} maxRomCalibre={maxRomCalibre} onToggle={handleCalibrationToggle} />;
+            case 'preview': return <PreviewTab selectedPatient={selectedPatient} selectedGame={selectedGame} sessionState={sessionState} timer={timer} />;
             default: return null;
         }
     }
@@ -342,7 +364,8 @@ export function SessionCreator() {
             if (selectedGame === 'fingerDance' && selectedFingers.length === 0) return true;
             if (selectedGame === 'appleGame' && (!appleGameMode || !appleGameLevel)) return true;
         }
-        if (activeTab === 'calibration' && selectedGame === 'fingerDance') return false;
+        // YENİ: Kalibrasyon ekranında nesne yoksa ilerlemesin
+        if (activeTab === 'apple-game-calibration' && sceneObjects.length === 0) return true;
         return false;
     };
 
@@ -352,20 +375,14 @@ export function SessionCreator() {
                 <>
                     <Button variant="outline" onClick={handleBack} disabled={activeTab === 'device' || isLoading}>Geri</Button>
                     <Button onClick={handleNext} disabled={isNextDisabled()}>
-                        {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> İşleniyor...</> : "Devam"}
+                        {isLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> İşleniyor...</> : (activeTab === 'apple-game-calibration' ? "Onayla ve Önizle" : "Devam")}
                     </Button>
                 </>
             );
         }
 
-        if (sessionState === "configuring") {
-            return <Button className="w-full" onClick={startTimer}>Seansı Başlat</Button>;
-        }
-
-        if (sessionState === "running") {
-            return <Button className="w-full" variant="destructive" onClick={stopTimer}>Seansı Bitir ve Kaydet</Button>;
-        }
-
+        if (sessionState === "configuring") return <Button className="w-full" onClick={startTimer}>Seansı Başlat</Button>;
+        if (sessionState === "running") return <Button className="w-full" variant="destructive" onClick={handleFinishGame}>Oyunu Bitir</Button>;
         return <Button className="w-full" disabled>Seans Tamamlandı</Button>;
     }
 
@@ -375,17 +392,32 @@ export function SessionCreator() {
                 <CardHeader><CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> Yeni Rehabilitasyon Seansı</CardTitle><CardDescription>Hastanıza özel bir rehabilitasyon seansı oluşturmak için adımları takip edin.</CardDescription></CardHeader>
             </Card>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} className="space-y-6">
                 <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="device">1. Cihaz</TabsTrigger>
-                    <TabsTrigger value="patient" disabled={!selectedDevice}>2. Hasta</TabsTrigger>
-                    <TabsTrigger value="setup" disabled={!selectedPatient}>3. Oyun</TabsTrigger>
+                    <TabsTrigger value="device" onClick={() => setActiveTab('device')}>1. Cihaz</TabsTrigger>
+                    <TabsTrigger value="patient" disabled={!selectedDevice} onClick={() => setActiveTab('patient')}>2. Hasta</TabsTrigger>
+                    <TabsTrigger value="setup" disabled={!selectedPatient} onClick={() => setActiveTab('setup')}>3. Oyun</TabsTrigger>
                     <TabsTrigger value="game-details" disabled={!selectedGame}>4. Oyun Detay</TabsTrigger>
-                    <TabsTrigger value="calibration" disabled={!selectedGame || selectedGame === 'appleGame'}>5. Kalibrasyon</TabsTrigger>
+                    {/* YENİ TAB AYRIMI */}
+                    {selectedGame === 'appleGame' ? (
+                        <TabsTrigger value="apple-game-calibration" disabled={appleGameLevel !== 5}>5. Elma Yerleştir</TabsTrigger>
+                    ) : (
+                        <TabsTrigger value="calibration" disabled={selectedGame !== 'fingerDance'}>5. Kalibrasyon</TabsTrigger>
+                    )}
                     <TabsTrigger value="preview" disabled={!selectedGame}>6. Önizleme</TabsTrigger>
                 </TabsList>
                 <div className="animate-in fade-in-20 transition-opacity duration-300">{renderContent()}</div>
             </Tabs>
+
+            <Dialog open={isFinishGameModalOpen} onOpenChange={setIsFinishGameModalOpen}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Oyun Bitti!</DialogTitle><DialogDescription>Sıradaki adımı seçin.</DialogDescription></DialogHeader>
+                    <DialogFooter className="sm:justify-center gap-2 pt-4">
+                        <Button variant="outline" onClick={handlePlayAgain}>Yeniden Oyna</Button>
+                        <Button variant="destructive" onClick={handleFinalizeSession}>Seansı Tamamla</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="flex justify-between mt-6">
                 {renderFooterButtons()}
