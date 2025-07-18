@@ -11,10 +11,13 @@ export const createOrUpdateRom = async (id: string, data: Omit<Rom, 'id'>): Prom
 };
 
 export const getAllRoms = async (): Promise<Rom[]> => {
-    const snapshot = await get(collectionRef);
-    if (!snapshot.exists()) return [];
-    const data = snapshot.val();
-    return Object.keys(data).map(key => ({ id: key, ...data[key] }));
+    const romsRef = ref(db, 'roms');
+    const snapshot = await get(romsRef);
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        return Object.keys(data).map(key => ({ id: key, ...data[key] }));
+    }
+    return [];
 };
 
 export const getRomById = async (id: string): Promise<Rom | null> => {

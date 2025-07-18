@@ -1,84 +1,72 @@
+// src/components/performance-analytics/PerformanceFilter.tsx
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Download, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Patient, Session } from '@/types/firebase';
+import { User, Calendar } from 'lucide-react';
 
-import { getAllPatients } from '@/services/patientService';
-import { Patient } from '@/types/firebase';
+interface PerformanceFilterProps {
+    patients: Patient[];
+    selectedPatientId: string | null;
+    onPatientSelect: (patientId: string) => void;
+    patientSessions: Session[];
+    selectedSessionId: string | null;
+    onSessionSelect: (sessionId: string) => void;
+}
 
-export function PerformanceFilter({ selectedPatientId }: { selectedPatientId: string | null }) {
-    const [patients, setPatients] = useState<Patient[]>([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentSelection, setCurrentSelection] = useState(selectedPatientId || "all");
+export function PerformanceFilter({
+    patients,
+    selectedPatientId,
+    onPatientSelect,
+    patientSessions,
+    selectedSessionId,
+    onSessionSelect
+}: PerformanceFilterProps) {
 
-    useEffect(() => {
-        if (selectedPatientId) {
-            setCurrentSelection(selectedPatientId);
-        }
-    }, [selectedPatientId]);
-
-    useEffect(() => {
-        const fetchPatients = async () => {
-            try {
-                const fetchedPatients = await getAllPatients();
-                setPatients(fetchedPatients);
-            } catch (error) {
-                console.error("Hastalar çekilirken hata:", error);
-            }
-        };
-        fetchPatients();
-    }, []);
-
-    const filteredPatients = patients.filter(patient =>
-        patient.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const sortedSessions = [...patientSessions].sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.startTime || '00:00:00'}`).getTime();
+        const dateB = new Date(`${b.date}T${b.startTime || '00:00:00'}`).getTime();
+        return dateB - dateA; // En yeni en üstte
+    });
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div className="flex gap-4 flex-wrap flex-1">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        placeholder="Hasta ara..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                    />
-                </div>
-
-                <Select value={currentSelection} onValueChange={setCurrentSelection}>
-                    <SelectTrigger className="w-full sm:w-48">
-                        <SelectValue placeholder="Hasta Seçin" />
+        <div className="flex flex-col sm:flex-row gap-4 justify-start items-center w-full">
+            {/* Hasta Seçimi */}
+            <div className="flex-1 w-full">
+                <Select value={selectedPatientId || ""} onValueChange={onPatientSelect}>
+                    <SelectTrigger className="w-full">
+                         <User className="mr-2 h-4 w-4" />
+                        <SelectValue placeholder="Bir hasta seçin..." />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">Tüm Hastalar</SelectItem>
-                        {filteredPatients.map(patient => (
+                        {patients.map(patient => (
                             <SelectItem key={patient.id} value={patient.id}>
                                 {patient.name}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
-
-                <Select defaultValue="month">
-                    <SelectTrigger className="w-full sm:w-32">
-                        <SelectValue placeholder="Zaman Aralığı" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="week">Bu Hafta</SelectItem>
-                        <SelectItem value="month">Bu Ay</SelectItem>
-                        <SelectItem value="quarter">3 Ay</SelectItem>
-                        <SelectItem value="year">Bu Yıl</SelectItem>
-                    </SelectContent>
-                </Select>
             </div>
-            <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Rapor İndir
-            </Button>
+            
+            {/* Seans Seçimi */}
+            {selectedPatientId && (
+                <div className="flex-1 w-full">
+                    <Select value={selectedSessionId || ""} onValueChange={onSessionSelect} disabled={patientSessions.length === 0}>
+                        <SelectTrigger className="w-full">
+                             <Calendar className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder={patientSessions.length > 0 ? "Bir seans seçin..." : "Hastanın seansı yok"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {sortedSessions.map(session => (
+                                <SelectItem key={session.id} value={session.id}>
+                                    {session.date} - {session.startTime || 'Saatsiz'} ({session.gameType})
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
         </div>
     );
 }
