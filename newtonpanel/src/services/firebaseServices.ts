@@ -1,7 +1,7 @@
 // src/services/firebaseServices.ts
 import { db } from './firebase'; // Firebase konfigürasyonunuzu buradan import edin
 import { ref, get, child } from 'firebase/database';
-import { Patient, Session, GameConfig, GameResult } from '@/types/firebase'; // Tiplerinizin yolunu güncelleyin
+import { Patient, Session, GameConfig, SessionResult } from '@/types/firebase'; // Tiplerinizin yolunu güncelleyin
 
 // Tüm hastaları getiren fonksiyon
 export const getAllPatients = async (): Promise<Patient[]> => {
@@ -47,15 +47,24 @@ export const getGameConfigsByIds = async (configIds: string[]): Promise<Record<s
 };
 
 // ID listesine göre oyun sonuçlarını getiren fonksiyon
-export const getGameResultsByIds = async (resultIds: string[]): Promise<Record<string, GameResult>> => {
-    const results: Record<string, GameResult> = {};
+export const getGameResultsByIds = async (resultIds: string[]): Promise<Record<string, SessionResult>> => {
+    const results: Record<string, SessionResult> = {};
     const uniqueResultIds = [...new Set(resultIds)]; // Tekrarları engelle
 
     for (const id of uniqueResultIds) {
         const snapshot = await get(child(ref(db, 'gameResults'), id));
         if (snapshot.exists()) {
-            results[id] = { id, ...snapshot.val() };
+            results[id] = snapshot.val();
         }
     }
     return results;
+};
+
+// Tüm ROM verilerini getiren fonksiyon
+export const getAllRoms = async (): Promise<Record<string, any>> => {
+    const snapshot = await get(ref(db, 'roms'));
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    return {};
 };

@@ -102,12 +102,13 @@ export interface AppleGameResult {
     apples?: AppleLog[];
     score?: number;
     successRate?: number;
+    totalScore?: number;
 }
 
 interface NoteLog {
-    noteID: string;
     finger: number;
     hit: boolean;
+    note: string;
     time: number;
 }
 
@@ -118,9 +119,24 @@ export interface FingerDanceResult {
     score?: number;
     combo?: number;
     mistakes?: number;
+    takes?: number;
+    totalScore?: number;
+    fingerAccuracy?: Record<string, number>;
 }
 
 export type GameResult = AppleGameResult | FingerDanceResult;
+
+export interface SessionHistoryItem {
+    activity: string;
+    level: number;
+    percent: number;
+    timestamp: string;
+}
+
+export type SessionResult = {
+    history?: SessionHistoryItem[];
+    results?: GameResult[];
+};
 
 // ===================================================================
 //                       ROM TİPLERİ
@@ -138,9 +154,5 @@ interface FingerRom {
 
 export interface Rom {
     id: string;
-    arm: ArmRom;
-    finger: {
-        leftFingers: FingerRom[];
-        rightFingers: FingerRom[];
-    }
+    finger: FingerRom[];
 }
