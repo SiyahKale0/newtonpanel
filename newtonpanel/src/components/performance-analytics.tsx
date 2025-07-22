@@ -1,4 +1,4 @@
-// src/components/performance-analysis/PerformanceAnalysis.tsx
+// src/components/PerformanceAnalysis.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -89,11 +89,12 @@ export default function PerformanceAnalysis() {
           // 3. Konfigürasyonları ve sonuçları paralel olarak çek
           const [configData, resultData] = await Promise.all([
             getGameConfigsByIds(configIds),
-            getGameResultsByIds(resultIds) // Bu fonksiyonun SessionResult tipine uygun veri döndürmesi gerekir
+            getGameResultsByIds(resultIds)
           ]);
 
           setGameConfigs(configData);
-          setGameResults(resultData);
+          // Type assertion ile dönüş tipini SessionResult'a çevir
+          setGameResults(resultData as Record<string, SessionResult>);
         }
       } catch (err: any) {
         console.error("Hasta verileri yüklenemedi:", err);
