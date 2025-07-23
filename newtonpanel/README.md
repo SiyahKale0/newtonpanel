@@ -34,3 +34,43 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+---
+
+# İş Paketi Faaliyetleri
+
+1. Portal ihtiyaç analizinin yapılması (terapist tarafı)
+2. Terapist portalının tasarımı ve temel özelliklerin kodlanması
+3. Hasta ve seans yönetimi modüllerinin geliştirilmesi (hasta ekle, düzenle, sil + seans geçmişi görüntüleme)
+4. Performans analitiği ve ilerleme takibi modülleri (doğruluk, tepki süresi, başarı oranı, zaman serileri)
+5. Grafik ve görselleştirme modülü (zaman serileri, ısı haritaları)
+6. Özel seans konfigürasyon ve giriş/kimlik doğrulama modülleri
+7. Firebase veri senkronizasyonu ve testler
+8. Terapist not ekleme ve hastaya özel egzersiz önerisi modülü
+9. Kullanıcı yetkilendirme ve rol bazlı erişim kontrolü (admin, terapist)
+10. Portal üzerinden kişiselleştirme parametrelerini düzenleme ve izleme ekranı
+
+# Kullanılacak Yöntemler ve İncelenecek Parametreler
+
+**Yöntemler:**
+- Frontend: React veya Next.js
+- Backend: Firebase Cloud Functions veya Node.js
+- UI Tasarımı: Material-UI, responsive design
+- Kimlik Doğrulama: OAuth 2.0, JWT token yönetimi
+- Veri Görselleştirme: Chart.js, D3.js
+- Isı Haritaları: Özel plotlama algoritmaları
+
+**İncelenecek Parametreler:**
+- Kullanıcı yetkilendirme başarısı ve erişim doğruluğu
+- Grafik yüklenme süresi (ms cinsinden)
+- Kullanıcı memnuniyeti (anket ile)
+- Portal yanıt süresi (API response time)
+- Kişiselleştirme parametrelerinin portalda güncellenme doğruluğu
+
+# Deney, Test ve Analizler
+
+1. Kullanılabilirlik Testi: Terapistlerle yürütülen UX değerlendirmeleri
+2. Güvenlik Testleri: Yetkisiz erişim denemeleri ve penetrasyon testi
+3. Performans Testi: Portalın yük altında API yanıt sürelerinin ölçülmesi
+4. Grafik Doğruluk Testi: Gerçek verilerin doğru ve eksiksiz görselleştirilip görselleştirilmediğinin kontrolü
+5. Veri Tutarlılık Testi: Firebase ile portal arası veri senkronizasyonu analizi
