@@ -1,3 +1,37 @@
+# Proje İş Paketleri ve Analiz Planı
+
+## İş Paketleri
+- Portal ihtiyaç analizinin yapılması (terapist tarafı)
+- Terapist portalının tasarımı ve temel özelliklerin kodlanması
+- Hasta ve seans yönetimi modüllerinin geliştirilmesi (hasta ekle, düzenle, sil + seans geçmişi görüntüleme)
+- Performans analitiği ve ilerleme takibi modülleri (doğruluk, tepki süresi, başarı oranı, zaman serileri)
+- Grafik ve görselleştirme modülü (zaman serileri, ısı haritaları)
+- Özel seans konfigürasyon ve giriş/kimlik doğrulama modülleri
+- Firebase veri senkronizasyonu ve testler
+- Terapist not ekleme ve hastaya özel egzersiz önerisi modülü
+- Kullanıcı yetkilendirme ve rol bazlı erişim kontrolü (admin, terapist)
+- Portal üzerinden kişiselleştirme parametrelerini düzenleme ve izleme ekranı
+
+## Kullanılacak Yöntemler ve İncelenecek Parametreler
+- Terapist portalı, React veya Next.js frontend teknolojisiyle geliştirilecek, backend için Firebase Cloud Functions veya Node.js kullanılacaktır.
+- Kullanıcı arayüzü tasarımında Material-UI ve responsive design ilkeleri kullanılacak.
+- Veri güvenliği için OAuth 2.0 tabanlı kimlik doğrulama ve JWT token yönetimi uygulanacaktır.
+- Veri görselleştirme için Chart.js, D3.js gibi kütüphaneler kullanılacak. Isı haritaları için özel plotlama algoritmaları geliştirilecek.
+
+**Parametreler:**
+- Kullanıcı yetkilendirme başarısı ve erişim doğruluğu
+- Grafik yüklenme süresi (ms cinsinden)
+- Kullanıcı memnuniyeti (anket ile)
+- Portal yanıt süresi (API response time)
+- Kişiselleştirme parametrelerinin portalda güncellenme doğruluğu
+
+## Deney, Test ve Analizler
+- **Kullanılabilirlik Testi:** Terapistlerle yürütülen UX değerlendirmeleri
+- **Güvenlik Testleri:** Yetkisiz erişim denemeleri ve penetrasyon testi
+- **Performans Testi:** Portalın yük altında API yanıt sürelerinin ölçülmesi
+- **Grafik Doğruluk Testi:** Gerçek verilerin doğru ve eksiksiz görselleştirilip görselleştirilmediğinin kontrolü
+- **Veri Tutarlılık Testi:** Firebase ile portal arası veri senkronizasyonu analizi
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
