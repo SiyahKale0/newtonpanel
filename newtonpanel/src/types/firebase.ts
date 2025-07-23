@@ -1,7 +1,6 @@
 // src/types/firebase.ts
 
 // Sahnedeki her bir nesnenin yapısını tanımlar.
-// 'type' özelliği artık 'apple_fresh', 'apple_rotten' ve 'basket' olabilir.
 export interface SceneObject {
     id: string;
     type: string;
@@ -25,7 +24,6 @@ export interface AppleGameConfig {
     duration: number; // saniye
     maxApples: number;
     handPerHundred: number;
-    // YENİ: Özel yerleşim seviyesi için sahne nesnelerini tutar.
     appleDirectory?: SceneObject[];
 }
 
@@ -53,6 +51,8 @@ export interface Patient {
     diagnosis: string;
     isFemale: boolean;
     note?: string;
+    // YENİ: Terapist önerileri için alan
+    recommendations?: Record<string, { text: string; date: string; therapistId: string }>;
     customGames: {
         appleGame: string;
         fingerDance: string;
@@ -60,8 +60,17 @@ export interface Patient {
     devices: string[];
     romID: string;
     sessionCount: number;
-    sessions: Record<string, boolean>; // { "session_id_1": true, ... }
+    sessions: Record<string, boolean>;
 }
+
+// YENİ: Terapistler için ayrı bir veri modeli
+export interface Therapist {
+    id: string; // Firebase Auth UID ile aynı olacak
+    name: string;
+    email: string;
+    role: 'therapist' | 'admin';
+}
+
 
 export interface Session {
     id: string;
@@ -89,19 +98,29 @@ export interface Device {
 //                  OYUN SONUÇ TİPLERİ
 // ===================================================================
 
-interface AppleLog {
-    appleID: string;
-    status: 'picked' | 'missed' | 'dropped';
-    basketID: string | null;
-    time: number;
+// YENİ: 3D pozisyon verisi için tip
+export interface Vector3Data {
+    x: number;
+    y: number;
+    z: number;
+}
+
+// YENİ: Hareket yörüngesi için tip
+export interface Trajectory {
+    toApple: Vector3Data[];
+    toBasket: Vector3Data[];
 }
 
 export interface AppleGameResult {
     sessionID: string;
     gameType: 'appleGame';
-    apples?: AppleLog[];
     score?: number;
     successRate?: number;
+<<<<<<< Updated upstream
+=======
+    // YENİ: Dinamik yörünge verisi
+    trajectories?: Trajectory[];
+>>>>>>> Stashed changes
 }
 
 interface NoteLog {
@@ -109,6 +128,8 @@ interface NoteLog {
     finger: number;
     hit: boolean;
     time: number;
+    // YENİ: Hangi elin kullanıldığı bilgisi
+    hand: 'left' | 'right';
 }
 
 export interface FingerDanceResult {
@@ -126,11 +147,6 @@ export type GameResult = AppleGameResult | FingerDanceResult;
 //                       ROM TİPLERİ
 // ===================================================================
 
-interface ArmRom {
-    leftSpace: number;
-    rightSpace: number;
-}
-
 interface FingerRom {
     min: number;
     max: number;
@@ -138,9 +154,21 @@ interface FingerRom {
 
 export interface Rom {
     id: string;
+<<<<<<< Updated upstream
     arm: ArmRom;
     finger: {
         leftFingers: FingerRom[];
         rightFingers: FingerRom[];
     }
 }
+=======
+    arm: {
+        leftSpace: number;
+        rightSpace: number;
+    };
+    finger: {
+        leftFingers: FingerRom[];
+        rightFingers: FingerRom[];
+    };
+}
+>>>>>>> Stashed changes

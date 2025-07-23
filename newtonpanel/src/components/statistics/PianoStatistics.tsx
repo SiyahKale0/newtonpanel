@@ -11,17 +11,16 @@ import * as THREE from 'three';
 
 // --- Helper Constants ---
 const FINGER_MAP: { [key: number]: string } = {
-    1: 'Başparmak', 2: 'İşaret Parmağı', 3: 'Orta Parmak', 4: 'Yüzük Parmağı', 5: 'Serçe Parmağı'
+    0: 'Serçe Parmağı', 1: 'Yüzük Parmağı', 2: 'Orta Parmak', 3: 'İşaret Parmağı', 4: 'Başparmak',
+    5: 'Başparmak', 6: 'İşaret Parmağı', 7: 'Orta Parmak', 8: 'Yüzük Parmağı', 9: 'Serçe Parmağı'
 };
+
 const FINGER_ORDER = ["Başparmak", "İşaret Parmağı", "Orta Parmak", "Yüzük Parmağı", "Serçe Parmağı"];
 
 // --- Component Definition ---
 export function PianoStatistics({ gameResult, romData }: { gameResult: FingerDanceResult, romData: Rom | null }) {
 
-    // --- State ---
     const [selectedFinger, setSelectedFinger] = useState<string | null>(null);
-
-    // --- Memoized Calculations ---
 
     // Her parmak için kullanım istatistiklerini (doğru vuruş, toplam) hesapla
     const fingerUsage = useMemo(() => {
@@ -34,8 +33,9 @@ export function PianoStatistics({ gameResult, romData }: { gameResult: FingerDan
         gameResult.notes?.forEach(note => {
             const fingerName = FINGER_MAP[note.finger];
             if (fingerName) {
-                // Şimdilik gelen veride el bilgisi olmadığı için 'Sağ' el varsayılıyor
-                const fullName = `Sağ ${fingerName}`;
+                // YENİ: Artık gelen verideki el bilgisine göre işlem yapılıyor
+                const handSide = note.finger < 5 ? 'Sol' : 'Sağ';
+                const fullName = `${handSide} ${fingerName}`;
                 if (usage[fullName]) {
                     usage[fullName].total++;
                     if (note.hit) {
@@ -47,38 +47,31 @@ export function PianoStatistics({ gameResult, romData }: { gameResult: FingerDan
         return usage;
     }, [gameResult]);
 
-    // Renk skalası oluşturmak için maksimum kullanımı bul
     const maxUsage = useMemo(() => Math.max(...Object.values(fingerUsage).map(u => u.total), 1), [fingerUsage]);
 
-    // Seçili olan parmak için ROM verisini getir
     const selectedFingerRom = useMemo(() => {
-        if (!selectedFinger || !romData) return null;
+        if (!selectedFinger || !romData?.finger) return null;
         const parts = selectedFinger.split(' ');
-        const side = parts[0] === 'Sağ' ? 'right' : 'left';
+        const side = parts[0];
         const fingerName = parts.slice(1).join(' ');
         const fingerIndex = FINGER_ORDER.indexOf(fingerName);
         if (fingerIndex === -1) return null;
-        const romArray = side === 'right' ? romData.finger.rightFingers : romData.finger.leftFingers;
+        // Firebase'deki yeni ROM yapısına göre veriyi çek
+        const romArray = side === 'Sağ' ? romData.finger.rightFingers : romData.finger.leftFingers;
         return romArray?.[fingerIndex] || null;
     }, [selectedFinger, romData]);
 
-
-    // --- Helper Functions ---
-
-    // Isı haritası için parmak rengini kullanıma göre belirle
     const getFingerColor = (fingerName: string) => {
         const usage = fingerUsage[fingerName];
-        if (!usage || usage.total === 0) return new THREE.Color("#dc2626"); // Veri yoksa kırmızı
+        if (!usage || usage.total === 0) return new THREE.Color("#dc2626");
         const ratio = usage.total / maxUsage;
-        return new THREE.Color().setHSL(0.6 - (ratio * 0.6), 0.9, 0.6); // Mavi'den Kırmızı'ya skala
+        return new THREE.Color().setHSL(0.6 - (ratio * 0.6), 0.9, 0.6);
     };
 
     const selectedFingerData = selectedFinger ? fingerUsage[selectedFinger] : null;
 
-    // --- Render ---
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
-            {/* 3D Model Bölümü */}
             <div className="md:col-span-2 bg-gray-100 dark:bg-gray-900/50 rounded-lg h-full min-h-[400px]">
                 <Canvas camera={{ position: [0, 1.5, 6], fov: 50 }} shadows>
                     <ambientLight intensity={1.2} />
@@ -100,8 +93,6 @@ export function PianoStatistics({ gameResult, romData }: { gameResult: FingerDan
                     <OrbitControls minPolarAngle={Math.PI / 4} maxPolarAngle={3 * Math.PI / 4} minDistance={3} maxDistance={10}/>
                 </Canvas>
             </div>
-
-            {/* İstatistik Paneli Bölümü */}
             <div className="md:col-span-1">
                 <Card className="h-full">
                     <CardHeader>

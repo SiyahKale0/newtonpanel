@@ -32,6 +32,16 @@ export const getSessionsByPatientId = async (patientId: string): Promise<Session
     return [];
 };
 
+// Tüm seansları getiren fonksiyon
+export const getAllSessions = async (): Promise<Session[]> => {
+    const snapshot = await get(ref(db, 'sessions'));
+    if (snapshot.exists()) {
+        const data = snapshot.val();
+        return Object.keys(data).map(key => ({ id: key, ...data[key] }));
+    }
+    return [];
+};
+
 // ID listesine göre oyun konfigürasyonlarını getiren fonksiyon
 export const getGameConfigsByIds = async (configIds: string[]): Promise<Record<string, GameConfig>> => {
     const configs: Record<string, GameConfig> = {};
@@ -58,4 +68,25 @@ export const getGameResultsByIds = async (resultIds: string[]): Promise<Record<s
         }
     }
     return results;
+<<<<<<< Updated upstream
+=======
+};
+
+// Tüm oyun sonuçlarını getiren fonksiyon
+export const getAllGameResults = async (): Promise<Record<string, SessionResult>> => {
+    const snapshot = await get(ref(db, 'gameResults'));
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    return {};
+};
+
+// Tüm ROM verilerini getiren fonksiyon
+export const getAllRoms = async (): Promise<Record<string, any>> => {
+    const snapshot = await get(ref(db, 'roms'));
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    return {};
+>>>>>>> Stashed changes
 };
