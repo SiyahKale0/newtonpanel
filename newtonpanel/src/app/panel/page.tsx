@@ -1,8 +1,7 @@
+// src/app/panel/page.tsx
 "use client"
 
 import { useState } from "react"
-import { useRouter } from 'next/navigation'
-import { deleteCookie } from 'cookies-next'
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +21,7 @@ import { SessionCreator } from "@/components/session-creator"
 import  PerformanceAnalytics  from "@/components/performance-analytics"
 import { DashboardOverview } from "@/components/dashboard-overview"
 import { DeviceManagement } from "@/components/device-management"
-
+import { handleSignOut } from "@/services/authService" // YENİ: Çıkış fonksiyonunu import et
 
 const menuItems = [
   { title: "Genel Bakış", icon: BarChart3, id: "overview" },
@@ -36,14 +35,7 @@ const menuItems = [
 export default function PhysioXRDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedPatientIdForAnalysis, setSelectedPatientIdForAnalysis] = useState<string | null>(null);
-  const router = useRouter()
 
-  const handleLogout = () => {
-    deleteCookie('auth-token', { path: '/' });
-    router.push('/login');
-  }
-
-  // Bu fonksiyon artık PatientDetailModal içinden çağrılacak
   const navigateToPerformance = (patientId: string) => {
     setSelectedPatientIdForAnalysis(patientId);
     setActiveTab("analytics");
@@ -102,10 +94,11 @@ export default function PhysioXRDashboard() {
 
                   <Button variant="outline" size="sm" disabled>
                     <User className="w-4 h-4 mr-2" />
-                    Dr. Ayşe Kaya
+                    Terapist
                   </Button>
 
-                  <Button variant="destructive" size="sm" onClick={handleLogout}>
+                  {/* YENİ: Çıkış butonu artık authService'i kullanıyor */}
+                  <Button variant="destructive" size="sm" onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Çıkış Yap
                   </Button>

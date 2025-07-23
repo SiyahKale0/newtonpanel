@@ -1,69 +1,44 @@
 // src/components/statistics/AppleStatisticsChart.tsx
 "use client"
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Line, Sphere, Text } from '@react-three/drei';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { AppleGameResult, Rom } from '@/types/firebase';
+import { AppleGameResult, Rom, Trajectory, Vector3Data } from '@/types/firebase';
 import * as THREE from 'three';
-import { Loader2 } from 'lucide-react';
 
 interface AppleStatisticsChartProps {
     gameResult: AppleGameResult;
     romData: Rom | null;
 }
 
-// String koordinatı vektöre çevir
-const parseCoords = (coordStr: string): THREE.Vector3 => {
-    const [x, y, z] = coordStr.replace(/[()]/g, '').split(', ').map(Number);
-    return new THREE.Vector3(x, y, z);
-};
+// Veri yapımızdan THREE.Vector3'e dönüştüren yardımcı fonksiyon
+const toVector3 = (v: Vector3Data) => new THREE.Vector3(v.x, v.y, v.z);
 
-export function AppleStatisticsChart({ romData }: AppleStatisticsChartProps) {
-    const [trajectories, setTrajectories] = useState<{ toApple: THREE.Vector3[]; toBasket: THREE.Vector3[]; }[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export function AppleStatisticsChart({ gameResult, romData }: AppleStatisticsChartProps) {
+    
+    // Prop olarak gelen trajectory verisini kullan
+    const trajectories = useMemo(() => {
+        if (!gameResult.trajectories) return [];
+        return gameResult.trajectories.map(traj => ({
+            toApple: traj.toApple.map(toVector3),
+            toBasket: traj.toBasket.map(toVector3)
+        }));
+    }, [gameResult.trajectories]);
 
-    // Bileşen yüklendiğinde JSON verisini fetch ile çek
-    useEffect(() => {
-        const fetchLogData = async () => {
-            setIsLoading(true);
-            try {
-                // public klasöründeki dosyaya doğrudan fetch atıyoruz
-                const response = await fetch('/position_log.json');
-                if (!response.ok) {
-                    throw new Error('Pozisyon verisi yüklenemedi.');
-                }
-                const data = await response.json();
-
-                const parsedData = data.map((log: any) => ({
-                    toApple: log.to_apple.map(parseCoords),
-                    toBasket: log.to_basket.map(parseCoords),
-                }));
-                setTrajectories(parsedData);
-
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchLogData();
-    }, []);
-
-    if (isLoading) {
+    if (!trajectories || trajectories.length === 0) {
         return (
             <div className="flex justify-center items-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <p className="ml-2">Grafik verisi yükleniyor...</p>
+                <p className="text-muted-foreground">Bu seans için hareket yörüngesi verisi bulunamadı.</p>
             </div>
         );
     }
 
-    if (trajectories.length === 0) {
-        return <p className="text-muted-foreground">Grafik için pozisyon verisi bulunamadı.</p>
-    }
+    // İlk yörüngenin son noktalarını alarak elma ve sepet pozisyonlarını belirle
+    const firstTrajectory = trajectories[0];
+    const applePosition = firstTrajectory.toApple[firstTrajectory.toApple.length - 1];
+    const basketPosition = firstTrajectory.toBasket[firstTrajectory.toBasket.length - 1];
 
     return (
         <div className="grid grid-cols-3 gap-4 h-full">
@@ -73,15 +48,23 @@ export function AppleStatisticsChart({ romData }: AppleStatisticsChartProps) {
                     <directionalLight position={[5, 5, 5]} intensity={1} />
                     <gridHelper args={[10, 10]} />
 
-                    {/* Örnek bir elma ve sepet pozisyonu */}
-                    <Sphere position={trajectories[0].toApple.slice(-1)[0]} args={[0.05]}>
-                        <meshStandardMaterial color="red" />
-                    </Sphere>
-                    <Text position={trajectories[0].toApple.slice(-1)[0]} fontSize={0.1} color="black" anchorY="bottom">Elma</Text>
-                    <Sphere position={trajectories[0].toBasket.slice(-1)[0]} args={[0.05]}>
-                        <meshStandardMaterial color="green" />
-                    </Sphere>
-                    <Text position={trajectories[0].toBasket.slice(-1)[0]} fontSize={0.1} color="black" anchorY="bottom">Sepet</Text>
+                    {/* Elma ve sepet pozisyonları artık dinamik */}
+                    {applePosition && (
+                        <>
+                            <Sphere position={applePosition} args={[0.05]}>
+                                <meshStandardMaterial color="red" />
+                            </Sphere>
+                            <Text position={applePosition} fontSize={0.1} color="black" anchorY="bottom">Elma</Text>
+                        </>
+                    )}
+                    {basketPosition && (
+                         <>
+                            <Sphere position={basketPosition} args={[0.05]}>
+                                <meshStandardMaterial color="green" />
+                            </Sphere>
+                            <Text position={basketPosition} fontSize={0.1} color="black" anchorY="bottom">Sepet</Text>
+                        </>
+                    )}
 
                     {/* Hareket yollarını çiz */}
                     {trajectories.map((traj, index) => (

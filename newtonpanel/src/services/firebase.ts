@@ -1,45 +1,26 @@
 // src/services/firebase.ts
 
-// Firebase'in temel kütüphanelerini import et
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getDatabase } from "firebase/database";
+import { getAuth } from "firebase/auth";
 
-// Projenizin Firebase yapılandırma bilgileri.
-// Bu bilgiler Firebase projenizin ayarlar sayfasından alınır.
+// .env.local dosyasından alınan yapılandırma bilgileri
 const firebaseConfig = {
-    apiKey: "AIzaSyBBG0dsK1GZL407sOgVtriG829Aadnjy-o",
-    authDomain: "unityrehabilitationar.firebaseapp.com",
-    databaseURL: "https://unityrehabilitationar-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "unityrehabilitationar",
-    storageBucket: "unityrehabilitationar.firebasestorage.app",
-    messagingSenderId: "829647184082",
-    appId: "1:829647184082:web:a5c469dc64e3f57f0f8d0b",
-    measurementId: "G-YE1WEJKK63"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Firebase uygulamasını başlatmak için bir kontrol mekanizması.
-// Eğer daha önce bir uygulama başlatılmamışsa, yenisini başlat.
-// Bu, Next.js gibi ortamlarda sayfa yenilendiğinde "Firebase App is already initialized"
-// hatasını almayı önler.
+// Firebase uygulamasını başlat
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Firebase Realtime Database servisine erişimi sağla.
+// Servisleri export et
 const db = getDatabase(app);
+const auth = getAuth(app);
 
-// Başlatılan uygulama (app) ve veritabanı (db) nesnelerini
-// projenin diğer kısımlarında kullanabilmek için dışa aktar.
-export { app, db };
-
-export interface Rom {
-  id?: string; // Firebase ID'si, opsiyonel bırakabilirsin
-  arm: {
-    leftSpace: number;
-    rightSpace: number;
-  };
-  fingers: {
-    [key: string]: {
-      min: string;
-      max: string;
-    };
-  };
-}
+export { app, db, auth };

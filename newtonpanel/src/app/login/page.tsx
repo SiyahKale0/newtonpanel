@@ -1,10 +1,11 @@
 // src/app/login/page.tsx
 "use client";
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Lock, LogIn, Stethoscope } from 'lucide-react';
-import { setCookie } from 'cookies-next'; // Cookie ayarlamak için yardımcı kütüphane
+import { signIn, setupAuthCookies, getUserRole } from '@/services/authService';
+import { auth } from '@/services/firebase';
 
 export default function DoctorLoginPage() {
   const [email, setEmail] = useState('');
@@ -13,31 +14,46 @@ export default function DoctorLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Eğer kullanıcı zaten giriş yapmışsa, onu ilgili panele yönlendir.
+  useEffect(() => {
+    if (auth.currentUser) {
+       router.push('/panel');
+    }
+  }, [router]);
+
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      // Sunucuya istek gönderiyormuş gibi 1 saniye bekle
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const userCredential = await signIn(email, password);
+      const user = userCredential.user;
 
-      // E-posta ve şifre kontrolü
-      if (email === 'd@d.d' && password === 'd') {
+      if (user) {
+        await setupAuthCookies(user);
+        const role = await getUserRole(user.uid);
 
-        // --- YÖNLENDİRME İÇİN EN ÖNEMLİ KISIM ---
-        // 1. Başarılı girişi kanıtlayan bir cookie oluştur.
-        //    Bu cookie, middleware tarafından okunacak.
-        setCookie('auth-token', 'gizli-ve-guvenli-bir-token', { maxAge: 60 * 60 * 1 }); // 1 gün geçerli
-
-        // 2. Kullanıcıyı panel sayfasına yönlendir.
-        router.push('/panel');
-
+        // Rolüne göre yönlendirme yap
+        if (role === 'admin') {
+          router.push('/admin');
+        } else if (role === 'therapist') {
+          router.push('/panel');
+        } else {
+          throw new Error('Kullanıcı rolü bulunamadı veya geçersiz.');
+        }
       } else {
-        throw new Error('E-posta veya şifre hatalı.');
+        throw new Error('Giriş başarısız oldu.');
       }
+
     } catch (err: any) {
-      setError(err.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error(err);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          setError('E-posta veya şifre hatalı.');
+      } else {
+          setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +67,7 @@ export default function DoctorLoginPage() {
               <Stethoscope size={48} className="text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Doktor Giriş Paneli
+              PhysioXR Panel Girişi
             </h1>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Lütfen bilgilerinizi girerek devam edin.
