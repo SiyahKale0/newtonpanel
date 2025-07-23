@@ -116,11 +116,8 @@ export interface AppleGameResult {
     gameType: 'appleGame';
     score?: number;
     successRate?: number;
-<<<<<<< Updated upstream
-=======
     // YENİ: Dinamik yörünge verisi
     trajectories?: Trajectory[];
->>>>>>> Stashed changes
 }
 
 interface NoteLog {
@@ -154,14 +151,6 @@ interface FingerRom {
 
 export interface Rom {
     id: string;
-<<<<<<< Updated upstream
-    arm: ArmRom;
-    finger: {
-        leftFingers: FingerRom[];
-        rightFingers: FingerRom[];
-    }
-}
-=======
     arm: {
         leftSpace: number;
         rightSpace: number;
@@ -171,4 +160,3 @@ export interface Rom {
         rightFingers: FingerRom[];
     };
 }
->>>>>>> Stashed changes
