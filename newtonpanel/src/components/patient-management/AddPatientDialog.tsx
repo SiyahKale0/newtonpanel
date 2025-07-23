@@ -14,10 +14,13 @@ import { Plus, Loader2 } from "lucide-react";
 import { createPatient } from "@/services/patientService";
 import { Patient } from "@/types/firebase";
 
-export function AddPatientDialog() {
-    // Dialog'un açık/kapalı durumunu kontrol etmek için state
-    const [open, setOpen] = useState(false);
-    
+interface AddPatientDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onPatientAdded: (patient: Patient) => void;
+}
+
+export function AddPatientDialog({ isOpen, onClose, onPatientAdded }: AddPatientDialogProps) {
     // Form alanları için state'ler
     const [name, setName] = useState("");
     const [age, setAge] = useState("");
@@ -65,15 +68,12 @@ export function AddPatientDialog() {
             };
 
             // Servis fonksiyonunu çağırarak veriyi Firebase'e kaydet
-            await createPatient(newPatientData);
+            const newPatient = await createPatient(newPatientData);
 
             alert("Hasta başarıyla kaydedildi!");
+            onPatientAdded(newPatient); // Yeni hastayı parent component'e bildir
             resetForm(); // Formu temizle
-            setOpen(false); // Dialog'u kapat
-
-            // Sayfayı yenilemeye veya callback'e gerek yok.
-            // Parent component'teki `onValue` dinleyicisi bu yeni hastayı algılayıp
-            // listeyi otomatik olarak güncelleyecektir.
+            onClose(); // Dialog'u kapat
 
         } catch (error) {
             console.error("Hasta kaydedilirken hata oluştu:", error);
@@ -83,13 +83,7 @@ export function AddPatientDialog() {
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Yeni Hasta Ekle
-                </Button>
-            </DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>Yeni Hasta Ekle</DialogTitle>

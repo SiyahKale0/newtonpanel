@@ -142,11 +142,6 @@ export type SessionResult = {
 //                       ROM TİPLERİ
 // ===================================================================
 
-interface ArmRom {
-    leftSpace: number;
-    rightSpace: number;
-}
-
 interface FingerRom {
     min: number;
     max: number;

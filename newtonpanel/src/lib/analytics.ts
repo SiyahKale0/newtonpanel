@@ -1,5 +1,6 @@
 // src/lib/analytics.ts
-import { Session, GameResult as GameResultType, GameConfig, AppleGameConfig, SessionResult } from '@/types/firebase';
+import { Session, GameConfig, SessionResult } from '@/types/firebase';
+import { PerformanceMetrics, ImprovementSuggestion } from '@/types/analytics';
 import {
   TrendingDown,
   Target, 
@@ -7,39 +8,6 @@ import {
   Calendar,
   Award
 } from 'lucide-react';
-
-
-// Analitik veri tiplerini tanımla
-export interface PerformanceMetrics {
-  totalSessions: number;
-  totalGameTime: number; // in minutes
-  averageScore: number;
-  bestScore: number;
-  improvementTrend: number;
-  sessionConsistency: number;
-  averageSessionDuration: number; // in minutes
-  gamePreference: { [key: string]: number };
-  weeklyProgress: Array<{
-    week: string;
-    sessions: number;
-    averageScore: number;
-    totalTime: number;
-  }>;
-  fingerPerformance: Array<{
-    finger: string;
-    accuracy: number;
-    improvement: number;
-  }>;
-  difficultyProgress: Array<{
-    level: number;
-    successRate: number;
-    attempts: number;
-  }>;
-  romAnalysis: Array<{
-    finger: string;
-    rom: number;
-  }>;
-}
 
 const FINGER_NAMES = [
   "Sol Serçe", "Sol Yüzük", "Sol Orta", "Sol İşaret", "Sol Başparmak",
@@ -55,7 +23,7 @@ export const getWeekKey = (date: Date): string => {
     return `${d.getUTCFullYear()}-W${weekNo}`;
 };
 
-export const calculateConsistency = (weeklyData: any[]): number => {
+export const calculateConsistency = (weeklyData: { sessions: number }[]): number => {
     if (weeklyData.length < 2) return 100;
     const sessionsPerWeek = weeklyData.map(d => d.sessions);
     const mean = sessionsPerWeek.reduce((a, b) => a + b, 0) / sessionsPerWeek.length;
@@ -100,12 +68,14 @@ export const calculatePerformanceMetrics = (
     sessions: Session[],
     results: Record<string, SessionResult>,
     gameConfigs: Record<string, GameConfig>,
-    roms: Record<string, any>
+    roms: Record<string, { finger: { min: number; max: number }[] }>
 ): PerformanceMetrics => {
     let totalGameTimeInSeconds = 0;
     let totalScore = 0;
     let scoreCount = 0;
     let bestScore = 0;
+    let totalResponseTime = 0;
+    let responseTimeCount = 0;
     const gamePreference: { [key: string]: number } = {};
     const weeklyData: { [key: string]: { sessions: number; totalScore: number; scoreCount: number; totalTime: number } } = {};
     const fingerPerformance: { [key: string]: { total: number; success: number } } = {};
@@ -141,6 +111,8 @@ export const calculatePerformanceMetrics = (
         // Process Apple Game results (from history)
         if (sessionResult.history && config && config.gameType === 'appleGame') {
             sessionResult.history.forEach(item => {
+                // Assuming 'item.timestamp' can be used to derive response time if needed,
+                // but for now, we'll focus on more direct time logs.
                 if (item.percent !== undefined) {
                     const score = item.percent;
                     totalScore += score;
@@ -181,6 +153,11 @@ export const calculatePerformanceMetrics = (
                         fingerCounts[note.finger].total++;
                         if (note.hit) {
                             fingerCounts[note.finger].success++;
+                            // Assuming note.time represents the time to hit in ms
+                            if (typeof note.time === 'number') {
+                                totalResponseTime += note.time;
+                                responseTimeCount++;
+                            }
                         }
                     });
 
@@ -263,6 +240,7 @@ export const calculatePerformanceMetrics = (
         totalSessions: sessions.length,
         totalGameTime: Math.round(totalGameTimeInSeconds / 60),
         averageSessionDuration,
+        averageResponseTime: responseTimeCount > 0 ? Math.round(totalResponseTime / responseTimeCount) : 0,
         averageScore,
         bestScore,
         improvementTrend,
@@ -275,8 +253,8 @@ export const calculatePerformanceMetrics = (
     };
 };
 
-export const generateImprovementSuggestions = (metrics: PerformanceMetrics) => {
-    const suggestions = [];
+export const generateImprovementSuggestions = (metrics: PerformanceMetrics): ImprovementSuggestion[] => {
+    const suggestions: ImprovementSuggestion[] = [];
 
     if (metrics.improvementTrend < 0) {
         suggestions.push({
@@ -295,7 +273,9 @@ export const generateImprovementSuggestions = (metrics: PerformanceMetrics) => {
     }
     
     if (metrics.fingerPerformance.length > 0) {
-        const weakestFinger = metrics.fingerPerformance.reduce((prev, curr) => prev.accuracy < curr.accuracy ? prev : curr);
+        const weakestFinger = metrics.fingerPerformance.reduce((prev, curr) => 
+            prev.accuracy < curr.accuracy ? prev : curr
+        );
         if (weakestFinger.accuracy < 60) {
             suggestions.push({
                 icon: Activity,
@@ -318,7 +298,7 @@ export const generateImprovementSuggestions = (metrics: PerformanceMetrics) => {
             icon: Award,
             color: "text-green-500",
             text: `<strong>Harika Gidiyorsun:</strong> Performans metrikleriniz oldukça iyi. Mevcut çalışma düzeninizi koruyarak gelişiminizi sürdürebilirsiniz.`
-        })
+        });
     }
 
     return suggestions;

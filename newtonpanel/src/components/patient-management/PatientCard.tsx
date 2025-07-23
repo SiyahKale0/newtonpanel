@@ -1,16 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Calendar, Eye, Edit } from "lucide-react";
+import { User, Calendar, Eye, Edit, Trash2 } from "lucide-react";
 import type { DashboardPatient } from "@/types/dashboard";
 
 interface PatientCardProps {
     patient: DashboardPatient;
     onEdit: () => void;
     onShowDetails: () => void;
+    onDelete: () => void;
 }
 
-export function PatientCard({ patient, onEdit, onShowDetails }: PatientCardProps) {
+export function PatientCard({ patient, onEdit, onShowDetails, onDelete }: PatientCardProps) {
     const statusVariant = patient.status === "active" ? "default" : "secondary";
     const statusClass = patient.status === "active" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "";
 
@@ -54,8 +55,8 @@ export function PatientCard({ patient, onEdit, onShowDetails }: PatientCardProps
                         <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
                             <Edit className="w-4 h-4 mr-2" />Düzenle
                         </Button>
-                        <Button size="sm" className="flex-1">
-                            <Calendar className="w-4 h-4 mr-2" />Seans Oluştur
+                        <Button variant="destructive" size="sm" className="flex-1" onClick={onDelete}>
+                            <Trash2 className="w-4 h-4 mr-2" />Sil
                         </Button>
                     </div>
                 </div>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PerformanceMetrics } from '@/lib/analytics';
-import { Calendar, Target, Award, TrendingUp, TrendingDown } from 'lucide-react';
+import { Calendar, Target, Award, TrendingUp, TrendingDown, Zap } from 'lucide-react';
 
 interface OverviewCardsProps {
   metrics: PerformanceMetrics;
@@ -25,6 +25,13 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({ metrics }) => {
       bgColor: "bg-green-50"
     },
     {
+      title: "Tepki Süresi",
+      value: `${metrics.averageResponseTime} ms`,
+      icon: Zap,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50"
+    },
+    {
       title: "En Yüksek Skor",
       value: `${metrics.bestScore}%`,
       icon: Award,
@@ -41,7 +48,7 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({ metrics }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
       {cards.map((card, index) => (
         <Card key={index}>
           <CardContent className="p-6">

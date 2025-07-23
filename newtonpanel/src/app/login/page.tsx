@@ -2,16 +2,15 @@
 "use client";
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { User, Lock, LogIn, Stethoscope } from 'lucide-react';
-import { setCookie } from 'cookies-next'; // Cookie ayarlamak için yardımcı kütüphane
+import { useAuth } from '@/hooks/use-auth';
 
 export default function DoctorLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -19,25 +18,15 @@ export default function DoctorLoginPage() {
     setError(null);
 
     try {
-      // Sunucuya istek gönderiyormuş gibi 1 saniye bekle
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // E-posta ve şifre kontrolü
-      if (email === 'd@d.d' && password === 'd') {
-
-        // --- YÖNLENDİRME İÇİN EN ÖNEMLİ KISIM ---
-        // 1. Başarılı girişi kanıtlayan bir cookie oluştur.
-        //    Bu cookie, middleware tarafından okunacak.
-        setCookie('auth-token', 'gizli-ve-guvenli-bir-token', { maxAge: 60 * 60 * 1 }); // 1 gün geçerli
-
-        // 2. Kullanıcıyı panel sayfasına yönlendir.
-        router.push('/panel');
-
-      } else {
-        throw new Error('E-posta veya şifre hatalı.');
-      }
+      await login(email, password);
+      // Yönlendirme `useAuth` hook'u içinde yapılıyor.
     } catch (err: any) {
-      setError(err.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        setError('E-posta veya şifre hatalı.');
+      } else {
+        setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+      console.error(err);
     } finally {
       setIsLoading(false);
     }

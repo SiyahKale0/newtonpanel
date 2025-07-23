@@ -20,6 +20,7 @@ import { ProgressChart } from './performance-analytics/ProgressChart';
 import { GamePreferenceChart } from './performance-analytics/GamePreferenceChart';
 import { FingerPerformance } from './performance-analytics/FingerPerformance';
 import { DifficultyAnalysis } from './performance-analytics/DifficultyAnalysis';
+import { FingerHeatmap } from './performance-analytics/FingerHeatmap';
 import { SessionDetails } from './performance-analytics/SessionDetails';
 import { RomAnalysis } from './performance-analytics/RomAnalysis';
 import { PatientHeader } from '../components/patient-profile/PatientHeader';
@@ -128,6 +129,7 @@ export default function PerformanceAnalysis() {
                   <FingerPerformance metrics={performanceMetrics} />
                   <DifficultyAnalysis metrics={performanceMetrics} />
                 </div>
+                <FingerHeatmap metrics={performanceMetrics} />
               </TabsContent>
 
               <TabsContent value="rom" className="space-y-6">
