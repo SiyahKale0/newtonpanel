@@ -121,9 +121,9 @@ export interface AppleGameResult {
 }
 
 interface NoteLog {
-    noteID: string;
     finger: number;
     hit: boolean;
+    note: string;
     time: number;
     // YENİ: Hangi elin kullanıldığı bilgisi
     hand: 'left' | 'right';
@@ -139,6 +139,18 @@ export interface FingerDanceResult {
 }
 
 export type GameResult = AppleGameResult | FingerDanceResult;
+
+export interface SessionHistoryItem {
+    activity: string;
+    level: number;
+    percent: number;
+    timestamp: string;
+}
+
+export type SessionResult = {
+    history?: SessionHistoryItem[];
+    results?: GameResult[];
+};
 
 // ===================================================================
 //                       ROM TİPLERİ
